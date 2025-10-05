@@ -120,27 +120,31 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
 
     setDeleting(true)
     try {
-      // Delete order (cascade will delete order_items)
-      const { error } = await fetch(`/api/orders/${order.id}`, {
-        method: 'DELETE'
-      }).then(res => res.json())
+      console.log('Sending delete request for order:', order.id)
       
-      if (error) {
-        console.error('Error deleting order:', error)
-        alert('Failed to delete order. Please try again.')
+      const response = await fetch(`/api/orders/${order.id}`, {
+        method: 'DELETE'
+      })
+      
+      console.log('Delete response status:', response.status)
+      const result = await response.json()
+      console.log('Delete response:', result)
+      
+      if (result.error) {
+        console.error('Error deleting order:', result.error)
+        alert('Failed to delete order: ' + result.error)
       } else {
-        console.log('Order deleted, refreshing and redirecting...')
-        // Navigate first, then refresh in background
+        console.log('Order deleted successfully, refreshing...')
+        // Refresh orders list first
+        await refetch.orders()
+        console.log('Orders refreshed, navigating...')
+        // Then navigate
         router.push('/orders')
-        // Refresh orders list in background
-        refetch.orders().then(() => {
-          console.log('Orders refreshed after delete')
-        })
         alert('Order deleted successfully!')
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting order:', error)
-      alert('Failed to delete order. Please try again.')
+      alert('Failed to delete order: ' + (error.message || 'Unknown error'))
     } finally {
       setDeleting(false)
     }
