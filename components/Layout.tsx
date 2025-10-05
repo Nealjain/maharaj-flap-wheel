@@ -6,6 +6,7 @@ import { useEffect } from 'react'
 import Sidebar from './Sidebar'
 import ProgressiveLoader from './ProgressiveLoader'
 import MobileBottomNav from './MobileBottomNav'
+import PageTransition from './PageTransition'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -48,7 +49,9 @@ export default function Layout({ children, requireAuth = true, requireAdmin = fa
       <Sidebar />
       <main className="flex-1 w-full lg:ml-0">
         <div className="p-4 sm:p-6 lg:p-8 pt-16 lg:pt-4 pb-20 lg:pb-4">
-          {children}
+          <PageTransition>
+            {children}
+          </PageTransition>
         </div>
       </main>
       <MobileBottomNav />

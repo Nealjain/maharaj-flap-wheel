@@ -206,7 +206,7 @@ export default function OrdersPage() {
                   >
                     <Link
                       href={`/orders/${order.id}`}
-                      className="block bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 hover:shadow-lg hover:border-primary-300 dark:hover:border-primary-700 transition-all duration-200 active:scale-[0.98]"
+                      className="block bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 hover-lift hover:border-primary-300 dark:hover:border-primary-700 active:scale-[0.98] transition-all duration-200"
                     >
                       {/* Header */}
                       <div className="flex items-start justify-between mb-3">
