@@ -44,9 +44,9 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
             Welcome back, {profile?.full_name || user?.email}!
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">

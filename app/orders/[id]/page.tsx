@@ -237,26 +237,26 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
 
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center space-x-3 sm:space-x-4">
             <button
               onClick={() => router.back()}
-              className="p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex-shrink-0"
             >
               <ArrowLeftIcon className="h-5 w-5" />
             </button>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">
                 Order Details
               </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Order ID: {order.id}
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
+                Order ID: {order.id.slice(0, 8)}...
               </p>
             </div>
           </div>
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             {getStatusBadge(order.status)}
             {isAdmin && (
               <>
@@ -264,32 +264,32 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
                   <>
                     <button
                       onClick={() => router.push(`/orders/${order.id}/edit`)}
-                      className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+                      className="inline-flex items-center px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 whitespace-nowrap"
                     >
-                      <PencilIcon className="h-4 w-4 mr-2" />
-                      Edit Order
+                      <PencilIcon className="h-4 w-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Edit Order</span>
                     </button>
                     <button
                       onClick={() => setShowPartialModal(true)}
-                      className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+                      className="inline-flex items-center px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 whitespace-nowrap"
                     >
-                      <DeliveryIcon className="h-4 w-4 mr-2" />
-                      Partial Delivery
+                      <DeliveryIcon className="h-4 w-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Partial Delivery</span>
                     </button>
                     <button
                       onClick={handleCompleteOrder}
                       disabled={loading}
-                      className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="inline-flex items-center px-3 sm:px-4 py-2 border border-transparent rounded-md shadow-sm text-xs sm:text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                     >
                       {loading ? (
                         <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          Completing...
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white sm:mr-2"></div>
+                          <span className="hidden sm:inline">Completing...</span>
                         </>
                       ) : (
                         <>
-                          <CheckCircleIcon className="h-4 w-4 mr-2" />
-                          Mark Complete
+                          <CheckCircleIcon className="h-4 w-4 sm:mr-2" />
+                          <span className="hidden sm:inline">Mark Complete</span>
                         </>
                       )}
                     </button>
@@ -298,17 +298,17 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
                 <button
                   onClick={handleDeleteOrder}
                   disabled={deleting}
-                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center px-3 sm:px-4 py-2 border border-transparent rounded-md shadow-sm text-xs sm:text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                 >
                   {deleting ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      Deleting...
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white sm:mr-2"></div>
+                      <span className="hidden sm:inline">Deleting...</span>
                     </>
                   ) : (
                     <>
-                      <TrashIcon className="h-4 w-4 mr-2" />
-                      Delete Order
+                      <TrashIcon className="h-4 w-4 sm:mr-2" />
+                      <span className="hidden sm:inline">Delete</span>
                     </>
                   )}
                 </button>
@@ -317,9 +317,9 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           {/* Order Information */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             {/* Company & Transport */}
             <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
@@ -382,24 +382,24 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
             </div>
 
             {/* Order Items */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">
                 Order Items ({order.order_items?.length || 0})
               </h2>
               
               {order.order_items && order.order_items.length > 0 ? (
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto -mx-4 sm:mx-0">
                   <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead className="bg-gray-50 dark:bg-gray-700">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Item</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">SKU</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Description</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Ordered</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Delivered</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Pending</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Price</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Total</th>
+                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Item</th>
+                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase hidden md:table-cell">SKU</th>
+                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase hidden lg:table-cell">Description</th>
+                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Qty</th>
+                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase hidden sm:table-cell">Delivered</th>
+                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase hidden sm:table-cell">Pending</th>
+                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase hidden md:table-cell">Price</th>
+                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Total</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -414,32 +414,42 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
                             transition={{ delay: index * 0.05 }}
                             className="hover:bg-gray-50 dark:hover:bg-gray-700/50"
                           >
-                            <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
-                              {item.item?.name || 'Unknown Item'}
+                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
+                              <div className="max-w-[120px] sm:max-w-none truncate">
+                                {item.item?.name || 'Unknown Item'}
+                              </div>
+                              <div className="md:hidden text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                {item.item?.sku || 'N/A'}
+                              </div>
                             </td>
-                            <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-500 dark:text-gray-400 hidden md:table-cell">
                               {item.item?.sku || 'N/A'}
                             </td>
-                            <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                              {item.item?.description || '-'}
+                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell">
+                              <div className="max-w-[200px] truncate">
+                                {item.item?.description || '-'}
+                              </div>
                             </td>
-                            <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-white">
+                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right text-gray-900 dark:text-white">
                               {item.quantity}
+                              <div className="sm:hidden text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                D:{delivered} P:{pending}
+                              </div>
                             </td>
-                            <td className="px-4 py-3 text-sm text-right">
+                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right hidden sm:table-cell">
                               <span className={delivered > 0 ? 'text-green-600 dark:text-green-400 font-medium' : 'text-gray-500 dark:text-gray-400'}>
                                 {delivered}
                               </span>
                             </td>
-                            <td className="px-4 py-3 text-sm text-right">
+                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right hidden sm:table-cell">
                               <span className={pending > 0 ? 'text-orange-600 dark:text-orange-400 font-medium' : 'text-gray-500 dark:text-gray-400'}>
                                 {pending}
                               </span>
                             </td>
-                            <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-white">
+                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right text-gray-900 dark:text-white hidden md:table-cell">
                               ₹{item.price.toFixed(2)}
                             </td>
-                            <td className="px-4 py-3 text-sm text-right font-medium text-gray-900 dark:text-white">
+                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right font-medium text-gray-900 dark:text-white">
                               ₹{(item.quantity * item.price).toFixed(2)}
                             </td>
                           </motion.tr>
