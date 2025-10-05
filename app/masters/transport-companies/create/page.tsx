@@ -12,7 +12,7 @@ import {
 
 export default function CreateTransportCompanyPage() {
   const router = useRouter()
-  const { createTransportCompany } = useData()
+  const { createTransportCompany, transportCompanies } = useData()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
@@ -28,6 +28,13 @@ export default function CreateTransportCompanyPage() {
       return
     }
 
+    // Check for duplicate name
+    const duplicateName = transportCompanies.find(company => company.name.toLowerCase() === formData.name.toLowerCase())
+    if (duplicateName) {
+      alert(`Transport company name "${formData.name}" already exists. Please use a different name.`)
+      return
+    }
+
     setLoading(true)
     console.log('Starting transport company creation...', formData)
 
@@ -37,7 +44,11 @@ export default function CreateTransportCompanyPage() {
 
       if (result.error) {
         console.error('Error creating transport company:', result.error)
-        alert(`Failed to create transport company: ${result.error.message || 'Please try again.'}`)
+        if (result.error.message?.includes('duplicate') || result.error.message?.includes('unique')) {
+          alert('A transport company with this name already exists. Please use a different name.')
+        } else {
+          alert(`Failed to create transport company: ${result.error.message || 'Please try again.'}`)
+        }
       } else {
         console.log('Transport company created successfully, redirecting...')
         alert('Transport company created successfully!')

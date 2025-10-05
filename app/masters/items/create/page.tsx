@@ -7,12 +7,13 @@ import Layout from '@/components/Layout'
 import { useData } from '@/lib/optimized-data-provider'
 import { 
   CheckIcon,
-  XMarkIcon
+  XMarkIcon,
+  SparklesIcon
 } from '@heroicons/react/24/outline'
 
 export default function CreateItemPage() {
   const router = useRouter()
-  const { createItem } = useData()
+  const { createItem, items } = useData()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     sku: '',
@@ -23,11 +24,38 @@ export default function CreateItemPage() {
     reserved_stock: 0
   })
 
+  // Generate unique SKU
+  const generateSKU = () => {
+    const prefix = 'ITM'
+    const timestamp = Date.now().toString().slice(-6)
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
+    const newSKU = `${prefix}-${timestamp}-${random}`
+    
+    setFormData(prev => ({
+      ...prev,
+      sku: newSKU
+    }))
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!formData.sku || !formData.name) {
       alert('Please fill in all required fields')
+      return
+    }
+
+    // Check for duplicate SKU
+    const duplicateSKU = items.find(item => item.sku.toLowerCase() === formData.sku.toLowerCase())
+    if (duplicateSKU) {
+      alert(`SKU "${formData.sku}" already exists. Please use a different SKU or generate a new one.`)
+      return
+    }
+
+    // Check for duplicate name
+    const duplicateName = items.find(item => item.name.toLowerCase() === formData.name.toLowerCase())
+    if (duplicateName) {
+      alert(`Item name "${formData.name}" already exists. Please use a different name.`)
       return
     }
 
@@ -38,7 +66,11 @@ export default function CreateItemPage() {
 
       if (error) {
         console.error('Error creating item:', error)
-        alert('Failed to create item. Please try again.')
+        if (error.message?.includes('duplicate') || error.message?.includes('unique')) {
+          alert('An item with this SKU or name already exists. Please use different values.')
+        } else {
+          alert('Failed to create item. Please try again.')
+        }
       } else {
         router.push('/masters/items')
       }
@@ -79,24 +111,36 @@ export default function CreateItemPage() {
             </h2>
             
             <div className="space-y-4">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Item ID (SKU) *
-                  </label>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Item ID (SKU) *
+                </label>
+                <div className="flex gap-2">
                   <input
                     type="text"
                     name="sku"
                     required
                     value={formData.sku}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
+                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
                     placeholder="Enter unique Item ID (e.g., FW-40-001)"
                   />
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    This must be unique across all items. Use a format like FW-40-001 for Flap Wheel 40 Grit
-                  </p>
+                  <button
+                    type="button"
+                    onClick={generateSKU}
+                    className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 whitespace-nowrap"
+                  >
+                    <SparklesIcon className="h-4 w-4 mr-2" />
+                    Generate
+                  </button>
                 </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Enter a unique SKU or click "Generate" to create one automatically
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">

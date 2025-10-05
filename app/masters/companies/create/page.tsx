@@ -12,7 +12,7 @@ import {
 
 export default function CreateCompanyPage() {
   const router = useRouter()
-  const { createCompany } = useData()
+  const { createCompany, companies } = useData()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
@@ -28,6 +28,13 @@ export default function CreateCompanyPage() {
       return
     }
 
+    // Check for duplicate name
+    const duplicateName = companies.find(company => company.name.toLowerCase() === formData.name.toLowerCase())
+    if (duplicateName) {
+      alert(`Company name "${formData.name}" already exists. Please use a different name.`)
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -35,7 +42,11 @@ export default function CreateCompanyPage() {
 
       if (error) {
         console.error('Error creating company:', error)
-        alert('Failed to create company. Please try again.')
+        if (error.message?.includes('duplicate') || error.message?.includes('unique')) {
+          alert('A company with this name already exists. Please use a different name.')
+        } else {
+          alert('Failed to create company. Please try again.')
+        }
       } else {
         router.push('/masters/companies')
       }
