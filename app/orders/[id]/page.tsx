@@ -16,7 +16,8 @@ import {
   DocumentTextIcon,
   CalendarIcon,
   TrashIcon,
-  PencilIcon
+  PencilIcon,
+  TruckIcon as DeliveryIcon
 } from '@heroicons/react/24/outline'
 import { formatDate, formatDateTime } from '@/lib/csv-export'
 
@@ -34,6 +35,8 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
   const [deleting, setDeleting] = useState(false)
   const [order, setOrder] = useState<any>(null)
   const [orderId, setOrderId] = useState<string>('')
+  const [showPartialModal, setShowPartialModal] = useState(false)
+  const [partialDeliveries, setPartialDeliveries] = useState<{[key: string]: number}>({})
 
   useEffect(() => {
     params.then(({ id }) => setOrderId(id))
@@ -43,6 +46,15 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
     if (orderId) {
       const foundOrder = orders.find(o => o.id === orderId)
       setOrder(foundOrder)
+      
+      // Initialize partial deliveries from order items
+      if (foundOrder?.order_items) {
+        const deliveries: {[key: string]: number} = {}
+        foundOrder.order_items.forEach((item: any) => {
+          deliveries[item.item_id] = item.delivered_quantity || 0
+        })
+        setPartialDeliveries(deliveries)
+      }
     }
   }, [orders, orderId])
 
@@ -63,6 +75,37 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
     } catch (error) {
       console.error('Error completing order:', error)
       alert('Failed to complete order. Please try again.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handlePartialDelivery = async () => {
+    if (!isAdmin || !order) return
+
+    setLoading(true)
+    try {
+      const response = await fetch(`/api/orders/${order.id}/partial-delivery`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ deliveries: partialDeliveries })
+      })
+
+      const result = await response.json()
+
+      if (result.error) {
+        throw new Error(result.error)
+      }
+
+      // Refresh orders
+      await refetch.orders()
+      setShowPartialModal(false)
+      alert('Partial delivery recorded successfully!')
+    } catch (error: any) {
+      console.error('Error recording partial delivery:', error)
+      alert(`Failed to record delivery: ${error.message}`)
     } finally {
       setLoading(false)
     }
@@ -181,6 +224,13 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
                     >
                       <PencilIcon className="h-4 w-4 mr-2" />
                       Edit Order
+                    </button>
+                    <button
+                      onClick={() => setShowPartialModal(true)}
+                      className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      <DeliveryIcon className="h-4 w-4 mr-2" />
+                      Partial Delivery
                     </button>
                     <button
                       onClick={handleCompleteOrder}
@@ -398,6 +448,67 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
             </div>
           </div>
         </div>
+
+        {/* Partial Delivery Modal */}
+        {showPartialModal && (
+          <div className="fixed inset-0 z-50 overflow-y-auto">
+            <div className="flex items-center justify-center min-h-screen px-4">
+              <div className="fixed inset-0 bg-black opacity-50" onClick={() => setShowPartialModal(false)}></div>
+              
+              <div className="relative bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full p-6 z-10">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Record Partial Delivery
+                </h3>
+                
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  {order.order_items?.map((item: any) => (
+                    <div key={item.item_id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                          {item.item?.name}
+                        </h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          Ordered: {item.quantity} | Delivered: {partialDeliveries[item.item_id] || 0}
+                        </p>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2">
+                        <label className="text-sm text-gray-700 dark:text-gray-300">Deliver:</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max={item.quantity}
+                          value={partialDeliveries[item.item_id] || 0}
+                          onChange={(e) => setPartialDeliveries(prev => ({
+                            ...prev,
+                            [item.item_id]: Math.min(item.quantity, Math.max(0, parseInt(e.target.value) || 0))
+                          }))}
+                          className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-white"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="mt-6 flex justify-end space-x-3">
+                  <button
+                    onClick={() => setShowPartialModal(false)}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handlePartialDelivery}
+                    disabled={loading}
+                    className="px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700 disabled:opacity-50"
+                  >
+                    {loading ? 'Saving...' : 'Save Delivery'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   )
