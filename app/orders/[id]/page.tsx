@@ -28,7 +28,7 @@ interface OrderDetailPageProps {
 
 export default function OrderDetailPage({ params }: OrderDetailPageProps) {
   const router = useRouter()
-  const { orders, updateOrder } = useData()
+  const { orders, updateOrder, refetch } = useData()
   const { isAdmin } = useAuth()
   const [loading, setLoading] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -86,6 +86,8 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
         console.error('Error deleting order:', error)
         alert('Failed to delete order. Please try again.')
       } else {
+        // Refresh orders list
+        await refetch.orders()
         alert('Order deleted successfully!')
         router.push('/orders')
       }
