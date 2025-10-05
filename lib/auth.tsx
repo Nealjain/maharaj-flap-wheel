@@ -24,7 +24,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('Session error:', error)
+        // Clear invalid session
+        setSession(null)
+        setUser(null)
+        setProfile(null)
+        setLoading(false)
+        return
+      }
+      
       setSession(session)
       setUser(session?.user ?? null)
       if (session?.user) {
@@ -32,12 +42,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setLoading(false)
       }
+    }).catch((error) => {
+      console.error('Failed to get session:', error)
+      setSession(null)
+      setUser(null)
+      setProfile(null)
+      setLoading(false)
     })
 
     // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event)
+      
+      // Handle token refresh errors
+      if (event === 'TOKEN_REFRESHED') {
+        console.log('Token refreshed successfully')
+      } else if (event === 'SIGNED_OUT') {
+        console.log('User signed out')
+        setSession(null)
+        setUser(null)
+        setProfile(null)
+        setLoading(false)
+        return
+      }
+      
       setSession(session)
       setUser(session?.user ?? null)
       
@@ -122,10 +152,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null)
       setProfile(null)
       setSession(null)
-      // Clear any cached data
-      localStorage.removeItem('supabase.auth.token')
+      
+      // Clear all auth-related storage
+      if (typeof window !== 'undefined') {
+        localStorage.clear()
+        sessionStorage.clear()
+      }
     } catch (error) {
       console.error('Error signing out:', error)
+      // Force clear state even if signOut fails
+      setUser(null)
+      setProfile(null)
+      setSession(null)
+      if (typeof window !== 'undefined') {
+        localStorage.clear()
+        sessionStorage.clear()
+      }
     } finally {
       setLoading(false)
     }

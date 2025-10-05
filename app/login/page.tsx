@@ -218,14 +218,19 @@ export default function LoginPage() {
           transition={{ delay: 0.3 }}
           className="mt-8 text-center"
         >
-          <div className="inline-flex items-center space-x-2 px-4 py-2 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg border border-gray-200 dark:border-gray-700">
+          <a 
+            href="https://profile.nealjain.website" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-flex items-center space-x-2 px-4 py-2 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-white/70 dark:hover:bg-gray-800/70 transition-colors"
+          >
             <div className="w-6 h-6 bg-primary-600 rounded flex items-center justify-center">
               <span className="text-white font-bold text-xs">N</span>
             </div>
             <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
               Product by Neal Jain
             </span>
-          </div>
+          </a>
           <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
             v1.0.0 • Software Developer & Designer
           </p>

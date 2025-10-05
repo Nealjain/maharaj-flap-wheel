@@ -89,7 +89,14 @@ export default function SplashScreen() {
                       <span className="text-xs font-bold">N</span>
                     </div>
                     <div>
-                      <p className="text-xs font-semibold">Neal Jain</p>
+                      <a 
+                        href="https://profile.nealjain.website" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-xs font-semibold hover:underline"
+                      >
+                        Neal Jain
+                      </a>
                       <p className="text-xs text-white/70">Developer & Designer</p>
                     </div>
                   </div>
