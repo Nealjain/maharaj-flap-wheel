@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import Layout from '@/components/Layout'
 import { useData } from '@/lib/optimized-data-provider'
 import { useAuth } from '@/lib/auth'
+import { supabase } from '@/lib/supabase'
 import { 
   ArrowLeftIcon,
   CheckCircleIcon,
@@ -120,28 +121,67 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
 
     setDeleting(true)
     try {
-      console.log('Sending delete request for order:', order.id)
+      console.log('Deleting order directly from Supabase:', order.id)
       
-      const response = await fetch(`/api/orders/${order.id}`, {
-        method: 'DELETE'
-      })
-      
-      console.log('Delete response status:', response.status)
-      const result = await response.json()
-      console.log('Delete response:', result)
-      
-      if (result.error) {
-        console.error('Error deleting order:', result.error)
-        alert('Failed to delete order: ' + result.error)
-      } else {
-        console.log('Order deleted successfully, refreshing...')
-        // Refresh orders list first
-        await refetch.orders()
-        console.log('Orders refreshed, navigating...')
-        // Then navigate
-        router.push('/orders')
-        alert('Order deleted successfully!')
+      // Get order items first to release stock
+      const { data: orderItems } = await supabase
+        .from('order_items')
+        .select('item_id, quantity')
+        .eq('order_id', order.id)
+
+      console.log('Order items to release:', orderItems)
+
+      // Release reserved stock for each item
+      if (orderItems && orderItems.length > 0) {
+        for (const item of orderItems) {
+          const { data: currentItem } = await supabase
+            .from('items')
+            .select('reserved_stock')
+            .eq('id', item.item_id)
+            .single()
+
+          if (currentItem) {
+            const newReservedStock = Math.max(0, currentItem.reserved_stock - item.quantity)
+            console.log(`Releasing stock for item ${item.item_id}: ${currentItem.reserved_stock} -> ${newReservedStock}`)
+            
+            await supabase
+              .from('items')
+              .update({ reserved_stock: newReservedStock })
+              .eq('id', item.item_id)
+          }
+        }
       }
+
+      // Delete order (cascade will delete order_items)
+      const { error } = await supabase
+        .from('orders')
+        .delete()
+        .eq('id', order.id)
+
+      if (error) {
+        console.error('Error deleting order:', error)
+        throw error
+      }
+
+      console.log('Order deleted successfully from Supabase')
+
+      // Log audit event
+      await supabase
+        .from('audit_logs')
+        .insert([{
+          event_type: 'DELETE',
+          entity: 'orders',
+          entity_id: order.id,
+          payload: { items_count: orderItems?.length || 0 }
+        }])
+
+      // Refresh orders list
+      await refetch.orders()
+      console.log('Orders refreshed, navigating...')
+      
+      // Navigate to orders page
+      router.push('/orders')
+      alert('Order deleted successfully!')
     } catch (error: any) {
       console.error('Error deleting order:', error)
       alert('Failed to delete order: ' + (error.message || 'Unknown error'))
