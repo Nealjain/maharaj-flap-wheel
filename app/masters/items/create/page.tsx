@@ -139,31 +139,27 @@ export default function CreateItemPage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Unit
-                  </label>
-                  <select
-                    name="unit"
-                    value={formData.unit}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
-                  >
-                    <option value="pcs">Pieces</option>
-                    <option value="kg">Kilograms</option>
-                    <option value="g">Grams</option>
-                    <option value="m">Meters</option>
-                    <option value="cm">Centimeters</option>
-                    <option value="l">Liters</option>
-                    <option value="ml">Milliliters</option>
-                    <option value="box">Box</option>
-                    <option value="set">Set</option>
-                    <option value="pair">Pair</option>
-                  </select>
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Unit
+                </label>
+                <select
+                  name="unit"
+                  value={formData.unit}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
+                >
+                  <option value="pcs">Pieces</option>
+                  <option value="kg">Kilograms</option>
+                  <option value="g">Grams</option>
+                  <option value="m">Meters</option>
+                  <option value="cm">Centimeters</option>
+                  <option value="l">Liters</option>
+                  <option value="ml">Milliliters</option>
+                  <option value="box">Box</option>
+                  <option value="set">Set</option>
+                  <option value="pair">Pair</option>
+                </select>
               </div>
 
               <div>
