@@ -92,7 +92,14 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
       const errors = results.filter(r => r.error)
       if (errors.length > 0) {
         console.error('Errors updating items:', errors)
-        throw new Error(errors[0].error?.message || 'Update failed')
+        const errorDetails = errors[0].error
+        console.error('Error details:', {
+          message: errorDetails?.message,
+          code: errorDetails?.code,
+          details: errorDetails?.details,
+          hint: errorDetails?.hint
+        })
+        throw new Error(errorDetails?.message || 'Update failed')
       }
 
       console.log('✅ All items updated successfully')
