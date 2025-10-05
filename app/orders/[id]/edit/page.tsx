@@ -199,34 +199,54 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
     console.log('Starting order update...')
     
     try {
-      const orderData = {
-        company_id: selectedCompany,
-        transport_company_id: selectedTransportCompany || null,
-        notes: notes,
-        order_items: orderItems.map(oi => ({
-          item_id: oi.item_id,
-          quantity: oi.quantity,
-          price: oi.price
-        }))
-      }
-
-      console.log('Order data:', orderData)
+      // Import supabase
+      const { supabase } = await import('@/lib/supabase')
       
-      const response = await fetch(`/api/orders/${orderId}/update`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(orderData)
-      })
+      // Update order details
+      const { error: orderError } = await supabase
+        .from('orders')
+        .update({
+          company_id: selectedCompany,
+          transport_company_id: selectedTransportCompany || null,
+          notes: notes
+        })
+        .eq('id', orderId)
 
-      const result = await response.json()
-      console.log('Update result:', result)
+      if (orderError) throw orderError
 
-      if (result.error) {
-        throw new Error(result.error)
-      }
+      // Get existing order_items with delivered_quantity
+      const { data: existingItems } = await supabase
+        .from('order_items')
+        .select('item_id, delivered_quantity')
+        .eq('order_id', orderId)
 
+      // Create a map of existing delivered quantities
+      const deliveredMap = new Map(
+        existingItems?.map(item => [item.item_id, item.delivered_quantity]) || []
+      )
+
+      // Delete all existing order_items
+      await supabase
+        .from('order_items')
+        .delete()
+        .eq('order_id', orderId)
+
+      // Insert updated order_items, preserving delivered_quantity
+      const itemsToInsert = orderItems.map(oi => ({
+        order_id: orderId,
+        item_id: oi.item_id,
+        quantity: oi.quantity,
+        price: oi.price,
+        delivered_quantity: deliveredMap.get(oi.item_id) || 0 // PRESERVE delivered_quantity!
+      }))
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(itemsToInsert)
+
+      if (itemsError) throw itemsError
+
+      console.log('Order updated successfully, delivered quantities preserved')
       addToast('Order updated successfully!', 'success')
       router.push(`/orders/${orderId}`)
     } catch (error: any) {
@@ -235,7 +255,6 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
       addToast(`Failed to update order: ${errorMessage}`, 'error')
     } finally {
       setIsSubmitting(false)
-      console.log('Order update finished')
     }
   }
 
