@@ -65,6 +65,8 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
 
     setLoading(true)
     try {
+      console.log('Sending partial delivery request:', partialDeliveries)
+      
       const response = await fetch(`/api/orders/${order.id}/partial-delivery`, {
         method: 'PATCH',
         headers: {
@@ -74,18 +76,19 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
       })
 
       const result = await response.json()
+      console.log('Partial delivery response:', result)
 
-      if (result.error) {
-        throw new Error(result.error)
+      if (!response.ok || result.error) {
+        throw new Error(result.error || `Server error: ${response.status}`)
       }
 
       // Refresh orders
       await refetch.orders()
       setShowPartialModal(false)
-      alert('Partial delivery recorded successfully!')
+      alert('✅ Partial delivery recorded successfully!')
     } catch (error: any) {
       console.error('Error recording partial delivery:', error)
-      alert(`Failed to record delivery: ${error.message}`)
+      alert(`❌ Failed to record delivery: ${error.message}`)
     } finally {
       setLoading(false)
     }

@@ -27,16 +27,27 @@ export async function PATCH(
     for (const [itemId, deliveredQty] of Object.entries(deliveries)) {
       const qty = Number(deliveredQty)
       
-      const { error } = await supabase
+      console.log(`Updating item ${itemId} with delivered_quantity: ${qty}`)
+      
+      const { data, error } = await supabase
         .from('order_items')
         .update({ delivered_quantity: qty })
         .eq('order_id', orderId)
         .eq('item_id', itemId)
+        .select()
 
       if (error) {
         console.error('Error updating order item:', error)
-        return NextResponse.json({ error: error.message }, { status: 400 })
+        return NextResponse.json({ 
+          error: error.message,
+          details: error,
+          orderId,
+          itemId,
+          qty
+        }, { status: 400 })
       }
+      
+      console.log('Update successful:', data)
     }
 
     // Log audit event
