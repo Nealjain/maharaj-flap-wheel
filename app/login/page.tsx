@@ -70,7 +70,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         {/* Theme Toggle */}
         <div className="flex justify-end mb-4">
@@ -209,6 +209,26 @@ export default function LoginPage() {
               </button>
             </div>
           </div>
+        </motion.div>
+
+        {/* Branding Footer */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="mt-8 text-center"
+        >
+          <div className="inline-flex items-center space-x-2 px-4 py-2 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg border border-gray-200 dark:border-gray-700">
+            <div className="w-6 h-6 bg-primary-600 rounded flex items-center justify-center">
+              <span className="text-white font-bold text-xs">N</span>
+            </div>
+            <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+              Product by Neal Jain
+            </span>
+          </div>
+          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            v1.0.0 • Software Developer & Designer
+          </p>
         </motion.div>
       </div>
     </div>
