@@ -5,9 +5,9 @@ export async function GET(request: NextRequest) {
   try {
     console.log('Fetching users...')
     
-    // Fetch all users from profiles
+    // Fetch all users from user_profiles
     const { data, error } = await supabase
-      .from('profiles')
+      .from('user_profiles')
       .select('*')
       .order('created_at', { ascending: false })
 
@@ -39,7 +39,7 @@ export async function PATCH(request: NextRequest) {
 
     // Update user role
     const { error } = await supabase
-      .from('profiles')
+      .from('user_profiles')
       .update({ role })
       .eq('id', userId)
 
@@ -53,7 +53,7 @@ export async function PATCH(request: NextRequest) {
       .from('audit_logs')
       .insert([{
         event_type: 'UPDATE',
-        entity: 'profiles',
+        entity: 'user_profiles',
         entity_id: userId,
         payload: { role }
       }])
