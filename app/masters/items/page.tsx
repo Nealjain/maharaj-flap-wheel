@@ -36,8 +36,8 @@ export default function ItemsPage() {
     setFilteredItems(filtered)
   }, [items, searchTerm])
 
-  const handleDeleteItem = async (itemId: string) => {
-    if (!confirm('Are you sure you want to delete this item? This action cannot be undone.')) {
+  const handleDeleteItem = async (itemId: string, itemName: string) => {
+    if (!confirm(`Are you sure you want to delete "${itemName}"? This action cannot be undone.`)) {
       return
     }
 
@@ -46,11 +46,22 @@ export default function ItemsPage() {
       
       if (error) {
         console.error('Error deleting item:', error)
-        alert('Failed to delete item. Please try again.')
+        // Check if it's a foreign key constraint error
+        if (error.message?.includes('foreign key') || error.code === '23503') {
+          alert('Cannot delete this item because it is referenced in one or more orders. Please remove it from all orders first.')
+        } else {
+          alert(`Failed to delete item: ${error.message || 'Please try again.'}`)
+        }
+      } else {
+        alert('Item deleted successfully!')
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting item:', error)
-      alert('Failed to delete item. Please try again.')
+      if (error.message?.includes('foreign key') || error.code === '23503') {
+        alert('Cannot delete this item because it is referenced in one or more orders. Please remove it from all orders first.')
+      } else {
+        alert(`Failed to delete item: ${error.message || 'Please try again.'}`)
+      }
     }
   }
 
@@ -66,7 +77,7 @@ export default function ItemsPage() {
     updated_at: item.updated_at
   }))
 
-  if (loading) {
+  if (loading.items) {
     return (
       <Layout>
         <div className="animate-pulse">
@@ -234,8 +245,9 @@ export default function ItemsPage() {
                             <PencilIcon className="h-4 w-4" />
                           </button>
                           <button
-                            onClick={() => handleDeleteItem(item.id)}
+                            onClick={() => handleDeleteItem(item.id, item.name)}
                             className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                            title="Delete item"
                           >
                             <TrashIcon className="h-4 w-4" />
                           </button>

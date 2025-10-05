@@ -163,7 +163,7 @@ export default function StockPage() {
     status: getStockStatus(item).label
   }))
 
-  if (loading) {
+  if (loading.items) {
     return (
       <Layout>
         <div className="animate-pulse">
@@ -441,8 +441,8 @@ export default function StockPage() {
                               key={pageNum}
                               onClick={() => handlePageChange(pageNum)}
                               className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${pageNum === currentPage
-                                  ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                                  : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                                ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                                : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
                                 }`}
                             >
                               {pageNum}

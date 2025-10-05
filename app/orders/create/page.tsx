@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, FormEvent } from 'react'
+import { useState, FormEvent, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import Layout from '@/components/Layout'
@@ -52,6 +52,29 @@ export default function CreateOrderPage() {
   const [showCompanyDropdown, setShowCompanyDropdown] = useState(false)
   const [showTransportDropdown, setShowTransportDropdown] = useState(false)
   const [showItemDropdown, setShowItemDropdown] = useState(false)
+
+  // Refs for click outside detection
+  const companyRef = useRef<HTMLDivElement>(null)
+  const transportRef = useRef<HTMLDivElement>(null)
+  const itemRef = useRef<HTMLDivElement>(null)
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (companyRef.current && !companyRef.current.contains(event.target as Node)) {
+        setShowCompanyDropdown(false)
+      }
+      if (transportRef.current && !transportRef.current.contains(event.target as Node)) {
+        setShowTransportDropdown(false)
+      }
+      if (itemRef.current && !itemRef.current.contains(event.target as Node)) {
+        setShowItemDropdown(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   // Filtered options for auto-complete
   const filteredCompanies = companies?.filter(company =>
@@ -133,6 +156,8 @@ export default function CreateOrderPage() {
     }
 
     setIsSubmitting(true)
+    console.log('Starting order creation...')
+    
     try {
       // Use the data provider's createOrder method
       const orderData = {
@@ -148,19 +173,24 @@ export default function CreateOrderPage() {
         }))
       }
 
-      const { error } = await createOrder(orderData)
+      console.log('Order data:', orderData)
+      const result = await createOrder(orderData)
+      console.log('Create order result:', result)
 
-      if (error) {
-        throw new Error(error.message || 'Failed to create order.')
+      if (result.error) {
+        console.error('Order creation error:', result.error)
+        throw result.error
       }
 
       addToast('Order created successfully!', 'success')
       router.push('/orders')
     } catch (error: any) {
-      console.error('Error creating order:', error.message)
-      addToast(`Failed to create order: ${error.message}`, 'error')
+      console.error('Error creating order:', error)
+      const errorMessage = error?.message || error?.toString() || 'Unknown error occurred'
+      addToast(`Failed to create order: ${errorMessage}`, 'error')
     } finally {
       setIsSubmitting(false)
+      console.log('Order creation finished')
     }
   }
 
@@ -234,7 +264,7 @@ export default function CreateOrderPage() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Company Selection with Auto-complete */}
-              <div>
+              <div className="relative" ref={companyRef}>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Company *
                 </label>
@@ -293,7 +323,7 @@ export default function CreateOrderPage() {
               </div>
 
               {/* Transport Company Selection with Auto-complete */}
-              <div>
+              <div className="relative" ref={transportRef}>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Transport Company
                 </label>
@@ -384,7 +414,7 @@ export default function CreateOrderPage() {
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Order Items</h3>
             
             {/* Add Item Search */}
-            <div className="mb-6">
+            <div className="mb-6 relative" ref={itemRef}>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Add Item
               </label>
@@ -448,8 +478,8 @@ export default function CreateOrderPage() {
                       type="number"
                       min="0"
                       step="0.01"
-                      value={orderItem.price}
-                      onChange={(e) => handleUpdateItemPrice(orderItem.item_id, parseFloat(e.target.value))}
+                      value={orderItem.price || ''}
+                      onChange={(e) => handleUpdateItemPrice(orderItem.item_id, parseFloat(e.target.value) || 0)}
                       className="w-24 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-white"
                       placeholder="0.00"
                     />

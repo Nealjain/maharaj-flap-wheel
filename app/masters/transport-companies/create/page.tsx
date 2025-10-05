@@ -29,21 +29,26 @@ export default function CreateTransportCompanyPage() {
     }
 
     setLoading(true)
+    console.log('Starting transport company creation...', formData)
 
     try {
-      const { error } = await createTransportCompany(formData)
+      const result = await createTransportCompany(formData)
+      console.log('Create transport company result:', result)
 
-      if (error) {
-        console.error('Error creating transport company:', error)
-        alert('Failed to create transport company. Please try again.')
+      if (result.error) {
+        console.error('Error creating transport company:', result.error)
+        alert(`Failed to create transport company: ${result.error.message || 'Please try again.'}`)
       } else {
+        console.log('Transport company created successfully, redirecting...')
+        alert('Transport company created successfully!')
         router.push('/masters/transport-companies')
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating transport company:', error)
-      alert('Failed to create transport company. Please try again.')
+      alert(`Failed to create transport company: ${error.message || 'Please try again.'}`)
     } finally {
       setLoading(false)
+      console.log('Transport company creation finished')
     }
   }
 

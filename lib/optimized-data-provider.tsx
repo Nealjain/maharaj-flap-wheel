@@ -245,8 +245,11 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
       const auditCache = cacheRef.current.auditLogs
       
       const promises = []
+      const loadingStates: Array<'transportCompanies' | 'auditLogs'> = []
       
       if (!isCacheValid(transportCache.timestamp)) {
+        setLoading(prev => ({ ...prev, transportCompanies: true }))
+        loadingStates.push('transportCompanies')
         promises.push(
           supabase.from('transport_companies')
             .select('*')
@@ -255,9 +258,12 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
         )
       } else {
         setTransportCompanies(transportCache.data)
+        setLoading(prev => ({ ...prev, transportCompanies: false }))
       }
       
       if (!isCacheValid(auditCache.timestamp)) {
+        setLoading(prev => ({ ...prev, auditLogs: true }))
+        loadingStates.push('auditLogs')
         promises.push(
           supabase.from('audit_logs')
             .select('*')
@@ -266,27 +272,31 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
         )
       } else {
         setAuditLogs(auditCache.data)
+        setLoading(prev => ({ ...prev, auditLogs: false }))
       }
       
       if (promises.length > 0) {
         const results = await Promise.all(promises)
         let resultIndex = 0
         
-        if (!isCacheValid(transportCache.timestamp)) {
+        if (loadingStates.includes('transportCompanies')) {
           const transportData = results[resultIndex].data || []
           setTransportCompanies(transportData)
           cacheRef.current.transportCompanies = { data: transportData, timestamp: Date.now(), pagination: transportCache.pagination }
+          setLoading(prev => ({ ...prev, transportCompanies: false }))
           resultIndex++
         }
         
-        if (!isCacheValid(auditCache.timestamp)) {
+        if (loadingStates.includes('auditLogs')) {
           const auditData = results[resultIndex].data || []
           setAuditLogs(auditData)
           cacheRef.current.auditLogs = { data: auditData, timestamp: Date.now(), pagination: auditCache.pagination }
+          setLoading(prev => ({ ...prev, auditLogs: false }))
         }
       }
     } catch (error) {
       console.error('Error loading secondary data:', error)
+      setLoading(prev => ({ ...prev, transportCompanies: false, auditLogs: false }))
     }
   }, [user])
 
@@ -298,26 +308,13 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
     }
   }, [user, loadEssentialData, loadSecondaryData])
 
-  // Update dashboard KPIs when orders or items change
+  // Update dashboard KPIs when memoized KPIs change
   useEffect(() => {
-    const updateKPIs = async () => {
-      setLoading(prev => ({ ...prev, dashboardKPIs: true }))
-      try {
-        if (orders.length === 0 || items.length === 0) {
-          // If we don't have data yet, try to fetch it
-          if (!loading.orders && !loading.items) {
-            await Promise.all([refreshOrders(), refreshItems()])
-          }
-        } else {
-          // We have data, calculate KPIs
-          refreshDashboardKPIs()
-        }
-      } finally {
-        setLoading(prev => ({ ...prev, dashboardKPIs: false }))
-      }
+    if (memoizedKPIs) {
+      setDashboardKPIs(memoizedKPIs)
+      cacheRef.current.dashboardKPIs = { data: memoizedKPIs, timestamp: Date.now() }
     }
-    updateKPIs()
-  }, [orders.length, items.length])
+  }, [memoizedKPIs])
 
   const refreshOrders = useCallback(async () => {
     setLoading(prev => ({ ...prev, orders: true }))
@@ -372,6 +369,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
   }, [])
 
   const refreshTransportCompanies = useCallback(async () => {
+    console.log('refreshTransportCompanies called')
     setLoading(prev => ({ ...prev, transportCompanies: true }))
     try {
       const { data, error } = await supabase
@@ -379,12 +377,15 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
         .select('*')
         .order('name')
 
+      console.log('Transport companies fetch result:', { data, error })
       if (error) throw error
       setTransportCompanies(data || [])
+      console.log('Transport companies state updated')
     } catch (error) {
       console.error('Error fetching transport companies:', error)
     } finally {
       setLoading(prev => ({ ...prev, transportCompanies: false }))
+      console.log('refreshTransportCompanies finished')
     }
   }, [])
 
@@ -422,71 +423,113 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
   }, [memoizedKPIs])
 
   const createOrder = async (orderData: any) => {
+    console.log('createOrder called with:', orderData)
     try {
+      // Separate order_items from order data
+      const { order_items, ...orderFields } = orderData
+      console.log('Order fields:', orderFields)
+      console.log('Order items:', order_items)
+      
       const { data, error } = await supabase
         .from('orders')
-        .insert([orderData])
+        .insert([orderFields])
         .select()
 
-      if (error) throw error
-
-      // Insert order items
-      if (orderData.order_items) {
-        const { error: itemsError } = await supabase
-          .from('order_items')
-          .insert(orderData.order_items.map((item: any) => ({
-            order_id: data[0].id,
-            item_id: item.item_id,
-            quantity: item.quantity,
-            price: item.price
-          })))
-
-        if (itemsError) throw itemsError
-
-        // Reserve stock for each item
-        for (const item of orderData.order_items) {
-          // First get current reserved stock
-          const { data: currentItem, error: fetchError } = await supabase
-            .from('items')
-            .select('reserved_stock')
-            .eq('id', item.item_id)
-            .single()
-
-          if (fetchError) {
-            console.error('Error fetching item:', item.item_id, fetchError)
-            continue
-          }
-
-          // Update with calculated value
-          const { error: stockError } = await supabase
-            .from('items')
-            .update({
-              reserved_stock: currentItem.reserved_stock + item.quantity
-            })
-            .eq('id', item.item_id)
-
-          if (stockError) {
-            console.error('Error reserving stock for item:', item.item_id, stockError)
-          }
-        }
+      console.log('Order insert result:', { data, error })
+      if (error) {
+        console.error('Order insert error:', error)
+        throw error
       }
 
-      // Log audit event
-      await supabase.from('audit_logs').insert([{
+      if (!data || data.length === 0) {
+        throw new Error('No order data returned after insert')
+      }
+
+      const orderId = data[0].id
+      console.log('Created order with ID:', orderId)
+
+      // Insert order items
+      if (order_items && order_items.length > 0) {
+        console.log('Inserting order items...')
+        const itemsToInsert = order_items.map((item: any) => ({
+          order_id: orderId,
+          item_id: item.item_id,
+          quantity: item.quantity,
+          price: item.price
+        }))
+        console.log('Items to insert:', itemsToInsert)
+
+        const { error: itemsError } = await supabase
+          .from('order_items')
+          .insert(itemsToInsert)
+
+        if (itemsError) {
+          console.error('Error inserting order items:', itemsError)
+          throw itemsError
+        }
+        console.log('Order items inserted successfully')
+
+        // Reserve stock for each item in parallel
+        console.log('Updating stock reservations...')
+        const stockUpdates = order_items.map(async (item: any) => {
+          try {
+            // First get current reserved stock
+            const { data: currentItem, error: fetchError } = await supabase
+              .from('items')
+              .select('reserved_stock')
+              .eq('id', item.item_id)
+              .single()
+
+            if (fetchError) {
+              console.error('Error fetching item:', item.item_id, fetchError)
+              return
+            }
+
+            // Update with calculated value
+            const { error: stockError } = await supabase
+              .from('items')
+              .update({
+                reserved_stock: currentItem.reserved_stock + item.quantity
+              })
+              .eq('id', item.item_id)
+
+            if (stockError) {
+              console.error('Error reserving stock for item:', item.item_id, stockError)
+            }
+          } catch (err) {
+            console.error('Error updating stock for item:', item.item_id, err)
+          }
+        })
+
+        await Promise.all(stockUpdates)
+        console.log('Stock reservations updated')
+      }
+
+      // Log audit event (don't wait for it)
+      supabase.from('audit_logs').insert([{
         event_type: 'ORDER_CREATED',
         entity: 'orders',
-        entity_id: data[0].id,
+        entity_id: orderId,
         payload: {
-          company_id: orderData.company_id,
-          transport_company_id: orderData.transport_company_id,
-          notes: orderData.notes,
-          items: orderData.order_items?.map((oi: any) => ({ item_id: oi.item_id, quantity: oi.quantity, price: oi.price })) || [],
+          company_id: orderFields.company_id,
+          transport_company_id: orderFields.transport_company_id,
+          notes: orderFields.notes,
+          items: order_items?.map((oi: any) => ({ item_id: oi.item_id, quantity: oi.quantity, price: oi.price })) || [],
         },
-      }])
+      }]).then(({ error: auditError }) => {
+        if (auditError) console.error('Error logging audit event:', auditError)
+      })
 
-      await refreshOrders()
-      await refreshItems()
-      await refreshDashboardKPIs()
+      // Refresh data in background (don't wait for it)
+      console.log('Triggering data refresh...')
+      Promise.all([
+        refreshOrders(),
+        refreshItems()
+      ]).then(() => {
+        console.log('Data refreshed')
+      }).catch(err => {
+        console.error('Error refreshing data:', err)
+      })
 
       return { error: null }
     } catch (error) {
@@ -504,8 +547,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
 
       if (error) throw error
 
-      await refreshOrders()
-      await refreshDashboardKPIs()
+      refreshOrders().catch(err => console.error('Error refreshing orders:', err))
 
       return { error: null }
     } catch (error) {
@@ -522,8 +564,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
 
       if (error) throw error
 
-      await refreshItems()
-      await refreshDashboardKPIs()
+      refreshItems().catch(err => console.error('Error refreshing items:', err))
 
       return { error: null }
     } catch (error) {
@@ -541,8 +582,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
 
       if (error) throw error
 
-      await refreshItems()
-      await refreshDashboardKPIs()
+      refreshItems().catch(err => console.error('Error refreshing items:', err))
 
       return { error: null }
     } catch (error) {
@@ -560,8 +600,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
 
       if (error) throw error
 
-      await refreshItems()
-      await refreshDashboardKPIs()
+      refreshItems().catch(err => console.error('Error refreshing items:', err))
 
       return { error: null }
     } catch (error) {
@@ -578,7 +617,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
 
       if (error) throw error
 
-      await refreshCompanies()
+      refreshCompanies().catch(err => console.error('Error refreshing companies:', err))
 
       return { error: null }
     } catch (error) {
@@ -596,7 +635,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
 
       if (error) throw error
 
-      await refreshCompanies()
+      refreshCompanies().catch(err => console.error('Error refreshing companies:', err))
 
       return { error: null }
     } catch (error) {
@@ -614,7 +653,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
 
       if (error) throw error
 
-      await refreshCompanies()
+      refreshCompanies().catch(err => console.error('Error refreshing companies:', err))
 
       return { error: null }
     } catch (error) {
@@ -624,14 +663,21 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
   }
 
   const createTransportCompany = async (data: any) => {
+    console.log('createTransportCompany called with:', data)
     try {
       const { error } = await supabase
         .from('transport_companies')
         .insert([data])
 
+      console.log('Transport company insert result:', { error })
       if (error) throw error
 
-      await refreshTransportCompanies()
+      console.log('Triggering transport companies refresh...')
+      refreshTransportCompanies().then(() => {
+        console.log('Transport companies refreshed')
+      }).catch(err => {
+        console.error('Error refreshing transport companies:', err)
+      })
 
       return { error: null }
     } catch (error) {
@@ -649,7 +695,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
 
       if (error) throw error
 
-      await refreshTransportCompanies()
+      refreshTransportCompanies().catch(err => console.error('Error refreshing transport companies:', err))
 
       return { error: null }
     } catch (error) {
@@ -667,7 +713,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
 
       if (error) throw error
 
-      await refreshTransportCompanies()
+      refreshTransportCompanies().catch(err => console.error('Error refreshing transport companies:', err))
 
       return { error: null }
     } catch (error) {

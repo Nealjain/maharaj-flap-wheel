@@ -24,11 +24,12 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             <OptimizedDataProvider>
-              {children}
+              <Toaster>
+                {children}
+              </Toaster>
             </OptimizedDataProvider>
           </AuthProvider>
         </ThemeProvider>
-        <Toaster />
       </body>
     </html>
   )

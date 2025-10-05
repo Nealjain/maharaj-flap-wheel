@@ -22,10 +22,9 @@ export default function Dashboard() {
   const { dashboardKPIs, orders, items, loading } = useData()
 
   // Only show loading state if we're still loading essential data
-  const isLoading = loading.orders || loading.items || loading.dashboardKPIs
-  const hasNoData = !orders.length || !items.length
+  const isLoading = loading.orders || loading.items
 
-  if (isLoading || hasNoData) {
+  if (isLoading) {
     return (
       <Layout>
         <div className="animate-pulse">

@@ -114,7 +114,7 @@ export default function MastersPage() {
     }
   ]
 
-  if (loading) {
+  if (loading.items || loading.companies || loading.transportCompanies) {
     return (
       <Layout>
         <div className="animate-pulse">

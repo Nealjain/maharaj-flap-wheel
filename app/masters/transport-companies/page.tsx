@@ -36,8 +36,8 @@ export default function TransportCompaniesPage() {
     setFilteredCompanies(filtered)
   }, [transportCompanies, searchTerm])
 
-  const handleDeleteCompany = async (companyId: string) => {
-    if (!confirm('Are you sure you want to delete this transport company? This action cannot be undone.')) {
+  const handleDeleteCompany = async (companyId: string, companyName: string) => {
+    if (!confirm(`Are you sure you want to delete "${companyName}"? This action cannot be undone.`)) {
       return
     }
 
@@ -46,11 +46,22 @@ export default function TransportCompaniesPage() {
       
       if (error) {
         console.error('Error deleting transport company:', error)
-        alert('Failed to delete transport company. Please try again.')
+        // Check if it's a foreign key constraint error
+        if (error.message?.includes('foreign key') || error.code === '23503') {
+          alert('Cannot delete this transport company because it is referenced in one or more orders. Please remove it from all orders first.')
+        } else {
+          alert(`Failed to delete transport company: ${error.message || 'Please try again.'}`)
+        }
+      } else {
+        alert('Transport company deleted successfully!')
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting transport company:', error)
-      alert('Failed to delete transport company. Please try again.')
+      if (error.message?.includes('foreign key') || error.code === '23503') {
+        alert('Cannot delete this transport company because it is referenced in one or more orders. Please remove it from all orders first.')
+      } else {
+        alert(`Failed to delete transport company: ${error.message || 'Please try again.'}`)
+      }
     }
   }
 
@@ -62,7 +73,7 @@ export default function TransportCompaniesPage() {
     updated_at: company.updated_at
   }))
 
-  if (loading) {
+  if (loading.transportCompanies) {
     return (
       <Layout>
         <div className="animate-pulse">
@@ -194,8 +205,9 @@ export default function TransportCompaniesPage() {
                         Edit
                       </button>
                       <button
-                        onClick={() => handleDeleteCompany(company.id)}
+                        onClick={() => handleDeleteCompany(company.id, company.name)}
                         className="inline-flex items-center px-3 py-1.5 border border-transparent shadow-sm text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700"
+                        title="Delete transport company"
                       >
                         <TrashIcon className="h-4 w-4 mr-1" />
                         Delete
