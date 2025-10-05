@@ -153,7 +153,17 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
           type: 'orders',
           fetch: async () => {
             const result = await supabase.from('orders')
-              .select('*')
+              .select(`
+                *,
+                company:companies(id, name, address, gst_number),
+                transport_company:transport_companies(id, name, phone, address),
+                order_items(
+                  item_id,
+                  quantity,
+                  price,
+                  item:items(id, name, sku, unit)
+                )
+              `)
               .order('created_at', { ascending: false })
               .limit(ordersCache.pagination.limit)
             return result
@@ -328,9 +338,19 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
   const refreshOrders = useCallback(async () => {
     setLoading(prev => ({ ...prev, orders: true }))
     try {
-      const { data, error } = await supabase
+      const { data, error} = await supabase
         .from('orders')
-        .select('*')
+        .select(`
+          *,
+          company:companies(id, name, address, gst_number),
+          transport_company:transport_companies(id, name, phone, address),
+          order_items(
+            item_id,
+            quantity,
+            price,
+            item:items(id, name, sku, unit)
+          )
+        `)
         .order('created_at', { ascending: false })
         .limit(100)
 

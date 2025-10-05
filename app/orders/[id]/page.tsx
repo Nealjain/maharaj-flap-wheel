@@ -14,7 +14,9 @@ import {
   BuildingOfficeIcon,
   TruckIcon,
   DocumentTextIcon,
-  CalendarIcon
+  CalendarIcon,
+  TrashIcon,
+  PencilIcon
 } from '@heroicons/react/24/outline'
 import { formatDate, formatDateTime } from '@/lib/csv-export'
 
@@ -29,6 +31,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
   const { orders, updateOrder } = useData()
   const { isAdmin } = useAuth()
   const [loading, setLoading] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [order, setOrder] = useState<any>(null)
   const [orderId, setOrderId] = useState<string>('')
 
@@ -55,12 +58,42 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
         alert('Failed to complete order. Please try again.')
       } else {
         setOrder({ ...order, status: 'completed' })
+        alert('Order marked as completed!')
       }
     } catch (error) {
       console.error('Error completing order:', error)
       alert('Failed to complete order. Please try again.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDeleteOrder = async () => {
+    if (!isAdmin || !order) return
+    
+    if (!confirm(`Are you sure you want to delete this order? This action cannot be undone.`)) {
+      return
+    }
+
+    setDeleting(true)
+    try {
+      // Delete order (cascade will delete order_items)
+      const { error } = await fetch(`/api/orders/${order.id}`, {
+        method: 'DELETE'
+      }).then(res => res.json())
+      
+      if (error) {
+        console.error('Error deleting order:', error)
+        alert('Failed to delete order. Please try again.')
+      } else {
+        alert('Order deleted successfully!')
+        router.push('/orders')
+      }
+    } catch (error) {
+      console.error('Error deleting order:', error)
+      alert('Failed to delete order. Please try again.')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -132,24 +165,45 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
           </div>
           <div className="flex items-center space-x-3">
             {getStatusBadge(order.status)}
-            {isAdmin && order.status === 'reserved' && (
-              <button
-                onClick={handleCompleteOrder}
-                disabled={loading}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Completing...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircleIcon className="h-4 w-4 mr-2" />
-                    Mark Complete
-                  </>
+            {isAdmin && (
+              <>
+                {order.status === 'reserved' && (
+                  <button
+                    onClick={handleCompleteOrder}
+                    disabled={loading}
+                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Completing...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircleIcon className="h-4 w-4 mr-2" />
+                        Mark Complete
+                      </>
+                    )}
+                  </button>
                 )}
-              </button>
+                <button
+                  onClick={handleDeleteOrder}
+                  disabled={deleting}
+                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {deleting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <TrashIcon className="h-4 w-4 mr-2" />
+                      Delete Order
+                    </>
+                  )}
+                </button>
+              </>
             )}
           </div>
         </div>
