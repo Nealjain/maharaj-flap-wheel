@@ -10,9 +10,9 @@ import {
 } from '@heroicons/react/24/outline'
 
 interface EditItemPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default function EditItemPage({ params }: EditItemPageProps) {
@@ -20,6 +20,7 @@ export default function EditItemPage({ params }: EditItemPageProps) {
   const { items, updateItem } = useData()
   const [loading, setLoading] = useState(false)
   const [item, setItem] = useState<any>(null)
+  const [itemId, setItemId] = useState<string>('')
   const [formData, setFormData] = useState({
     sku: '',
     name: '',
@@ -30,21 +31,27 @@ export default function EditItemPage({ params }: EditItemPageProps) {
   })
 
   useEffect(() => {
-    const foundItem = items.find(i => i.id === params.id)
-    if (foundItem) {
-      setItem(foundItem)
-      setFormData({
-        sku: foundItem.sku,
-        name: foundItem.name,
-        description: foundItem.description || '',
-        unit: foundItem.unit,
-        physical_stock: foundItem.physical_stock,
-        reserved_stock: foundItem.reserved_stock
-      })
-    } else {
-      router.push('/masters/items')
+    params.then(({ id }) => setItemId(id))
+  }, [params])
+
+  useEffect(() => {
+    if (itemId) {
+      const foundItem = items.find(i => i.id === itemId)
+      if (foundItem) {
+        setItem(foundItem)
+        setFormData({
+          sku: foundItem.sku,
+          name: foundItem.name,
+          description: foundItem.description || '',
+          unit: foundItem.unit,
+          physical_stock: foundItem.physical_stock,
+          reserved_stock: foundItem.reserved_stock
+        })
+      } else {
+        router.push('/masters/items')
+      }
     }
-  }, [items, params.id, router])
+  }, [items, itemId, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -57,7 +64,7 @@ export default function EditItemPage({ params }: EditItemPageProps) {
     setLoading(true)
 
     try {
-      const { error } = await updateItem(params.id, formData)
+      const { error } = await updateItem(itemId, formData)
 
       if (error) {
         console.error('Error updating item:', error)

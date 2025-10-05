@@ -473,8 +473,8 @@ export default function CreateOrderPage() {
                       type="number"
                       min="1"
                       max={orderItem.available_stock}
-                      value={orderItem.quantity}
-                      onChange={(e) => handleUpdateItemQuantity(orderItem.item_id, parseInt(e.target.value))}
+                      value={orderItem.quantity || ''}
+                      onChange={(e) => handleUpdateItemQuantity(orderItem.item_id, parseInt(e.target.value) || 1)}
                       className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-white"
                     />
                   </div>

@@ -19,9 +19,9 @@ import {
 import { formatDate, formatDateTime } from '@/lib/csv-export'
 
 interface OrderDetailPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default function OrderDetailPage({ params }: OrderDetailPageProps) {
@@ -30,11 +30,18 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
   const { isAdmin } = useAuth()
   const [loading, setLoading] = useState(false)
   const [order, setOrder] = useState<any>(null)
+  const [orderId, setOrderId] = useState<string>('')
 
   useEffect(() => {
-    const foundOrder = orders.find(o => o.id === params.id)
-    setOrder(foundOrder)
-  }, [orders, params.id])
+    params.then(({ id }) => setOrderId(id))
+  }, [params])
+
+  useEffect(() => {
+    if (orderId) {
+      const foundOrder = orders.find(o => o.id === orderId)
+      setOrder(foundOrder)
+    }
+  }, [orders, orderId])
 
   const handleCompleteOrder = async () => {
     if (!isAdmin || !order) return

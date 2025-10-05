@@ -10,9 +10,9 @@ import {
 } from '@heroicons/react/24/outline'
 
 interface EditTransportCompanyPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default function EditTransportCompanyPage({ params }: EditTransportCompanyPageProps) {
@@ -20,6 +20,7 @@ export default function EditTransportCompanyPage({ params }: EditTransportCompan
   const { transportCompanies, updateTransportCompany } = useData()
   const [loading, setLoading] = useState(false)
   const [transportCompany, setTransportCompany] = useState<any>(null)
+  const [companyId, setCompanyId] = useState<string>('')
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -27,18 +28,24 @@ export default function EditTransportCompanyPage({ params }: EditTransportCompan
   })
 
   useEffect(() => {
-    const company = transportCompanies.find(tc => tc.id === params.id)
-    if (company) {
-      setTransportCompany(company)
-      setFormData({
-        name: company.name,
-        address: company.address || '',
-        phone: company.phone || ''
-      })
-    } else {
-      router.push('/masters/transport-companies')
+    params.then(({ id }) => setCompanyId(id))
+  }, [params])
+
+  useEffect(() => {
+    if (companyId) {
+      const company = transportCompanies.find(tc => tc.id === companyId)
+      if (company) {
+        setTransportCompany(company)
+        setFormData({
+          name: company.name,
+          address: company.address || '',
+          phone: company.phone || ''
+        })
+      } else {
+        router.push('/masters/transport-companies')
+      }
     }
-  }, [transportCompanies, params.id, router])
+  }, [transportCompanies, companyId, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -51,7 +58,7 @@ export default function EditTransportCompanyPage({ params }: EditTransportCompan
     setLoading(true)
 
     try {
-      const { error } = await updateTransportCompany(params.id, formData)
+      const { error } = await updateTransportCompany(companyId, formData)
 
       if (error) {
         console.error('Error updating transport company:', error)

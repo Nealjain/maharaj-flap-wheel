@@ -10,9 +10,9 @@ import {
 } from '@heroicons/react/24/outline'
 
 interface EditCompanyPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default function EditCompanyPage({ params }: EditCompanyPageProps) {
@@ -20,6 +20,7 @@ export default function EditCompanyPage({ params }: EditCompanyPageProps) {
   const { companies, updateCompany } = useData()
   const [loading, setLoading] = useState(false)
   const [company, setCompany] = useState<any>(null)
+  const [companyId, setCompanyId] = useState<string>('')
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -27,18 +28,24 @@ export default function EditCompanyPage({ params }: EditCompanyPageProps) {
   })
 
   useEffect(() => {
-    const foundCompany = companies.find(c => c.id === params.id)
-    if (foundCompany) {
-      setCompany(foundCompany)
-      setFormData({
-        name: foundCompany.name,
-        address: foundCompany.address || '',
-        gst_number: foundCompany.gst_number || ''
-      })
-    } else {
-      router.push('/masters/companies')
+    params.then(({ id }) => setCompanyId(id))
+  }, [params])
+
+  useEffect(() => {
+    if (companyId) {
+      const foundCompany = companies.find(c => c.id === companyId)
+      if (foundCompany) {
+        setCompany(foundCompany)
+        setFormData({
+          name: foundCompany.name,
+          address: foundCompany.address || '',
+          gst_number: foundCompany.gst_number || ''
+        })
+      } else {
+        router.push('/masters/companies')
+      }
     }
-  }, [companies, params.id, router])
+  }, [companies, companyId, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -51,7 +58,7 @@ export default function EditCompanyPage({ params }: EditCompanyPageProps) {
     setLoading(true)
 
     try {
-      const { error } = await updateCompany(params.id, formData)
+      const { error } = await updateCompany(companyId, formData)
 
       if (error) {
         console.error('Error updating company:', error)
