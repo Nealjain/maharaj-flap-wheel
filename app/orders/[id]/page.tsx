@@ -74,12 +74,53 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
     try {
       console.log('Updating delivery quantities:', partialDeliveries)
       
-      // Update all items in parallel - super fast!
+      // Check auth status
+      const { data: { session } } = await supabase.auth.getSession()
+      console.log('Auth session:', session ? 'Authenticated' : 'Not authenticated')
+      console.log('User ID:', session?.user?.id)
+      console.log('User role:', session?.user?.role)
+      
+      // Try using Supabase function first (bypasses RLS)
+      try {
+        const { data: funcResult, error: funcError } = await supabase
+          .rpc('update_delivery_quantities', {
+            p_order_id: order.id,
+            p_deliveries: partialDeliveries
+          })
+
+        if (!funcError && funcResult?.success) {
+          console.log('✅ Updated via function')
+          
+          // Update local state immediately
+          setOrder((prev: any) => ({
+            ...prev,
+            order_items: prev.order_items.map((item: any) => ({
+              ...item,
+              delivered_quantity: partialDeliveries[item.item_id] || item.delivered_quantity
+            }))
+          }))
+
+          clearTimeout(timeout)
+          setShowPartialModal(false)
+          alert('✅ Delivery recorded!')
+          return
+        }
+        
+        console.log('Function not available, trying direct update...')
+      } catch (funcErr) {
+        console.log('Function failed, trying direct update...', funcErr)
+      }
+      
+      // Fallback: Direct update (requires RLS fix)
       const updates = Object.entries(partialDeliveries).map(([itemId, deliveredQty]) => {
-        console.log(`Updating item ${itemId} to ${deliveredQty}`)
+        const qty = Number(deliveredQty)
+        console.log(`Updating item ${itemId} to ${qty} (type: ${typeof qty})`)
+        console.log(`Order ID: ${order.id}`)
+        console.log(`Delivered quantity value:`, qty, `>= 0?`, qty >= 0)
+        
         return supabase
           .from('order_items')
-          .update({ delivered_quantity: deliveredQty })
+          .update({ delivered_quantity: qty })
           .eq('order_id', order.id)
           .eq('item_id', itemId)
       })
@@ -99,12 +140,15 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
           details: errorDetails?.details,
           hint: errorDetails?.hint
         })
+        
+        // Show helpful error message
+        alert(`❌ RLS Policy Error!\n\nPlease run URGENT_RLS_FIX.sql in Supabase SQL Editor.\n\nError: ${errorDetails?.message}`)
         throw new Error(errorDetails?.message || 'Update failed')
       }
 
       console.log('✅ All items updated successfully')
 
-      // Update local state immediately - no refetch needed!
+      // Update local state immediately
       setOrder((prev: any) => ({
         ...prev,
         order_items: prev.order_items.map((item: any) => ({
@@ -119,7 +163,9 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
     } catch (error: any) {
       console.error('Error recording delivery:', error)
       clearTimeout(timeout)
-      alert(`❌ Failed: ${error.message}`)
+      if (!error.message.includes('RLS Policy')) {
+        alert(`❌ Failed: ${error.message}`)
+      }
     } finally {
       setLoading(false)
     }

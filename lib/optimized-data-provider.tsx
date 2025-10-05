@@ -495,6 +495,9 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
     }
   }, [memoizedKPIs])
 
+  // Auto-refresh disabled - was causing partial delivery to reset
+  // Users can manually refresh by pulling down on mobile or clicking refresh button
+
   const createOrder = async (orderData: any) => {
     console.log('createOrder called with:', orderData)
     try {

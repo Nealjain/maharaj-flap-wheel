@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import Sidebar from './Sidebar'
 import ProgressiveLoader from './ProgressiveLoader'
+import MobileBottomNav from './MobileBottomNav'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -46,10 +47,11 @@ export default function Layout({ children, requireAuth = true, requireAdmin = fa
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
       <Sidebar />
       <main className="flex-1 w-full lg:ml-0">
-        <div className="p-4 sm:p-6 lg:p-8 pt-16 lg:pt-4">
+        <div className="p-4 sm:p-6 lg:p-8 pt-16 lg:pt-4 pb-20 lg:pb-4">
           {children}
         </div>
       </main>
+      <MobileBottomNav />
     </div>
   )
 }
