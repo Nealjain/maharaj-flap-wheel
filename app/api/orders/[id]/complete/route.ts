@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
+// Complete order route - Next.js 15 compatible
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
