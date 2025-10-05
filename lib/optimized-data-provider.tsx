@@ -66,7 +66,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
   const [transportCompanies, setTransportCompanies] = useState<TransportCompany[]>([])
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([])
   const [dashboardKPIs, setDashboardKPIs] = useState<DashboardKPIs | null>(null)
-  
+
   const [loading, setLoading] = useState({
     orders: false,
     items: false,
@@ -77,7 +77,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
   })
 
   const { user } = useAuth()
-  
+
   // Data cache with 5-minute TTL
   const cacheRef = useRef<DataCache>({
     orders: { data: [], timestamp: 0, pagination: { page: 1, limit: 50, totalCount: 0 } },
@@ -87,16 +87,16 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
     auditLogs: { data: [], timestamp: 0, pagination: { page: 1, limit: 100, totalCount: 0 } },
     dashboardKPIs: { data: null, timestamp: 0 }
   })
-  
+
   const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
   const isCacheValid = (timestamp: number) => Date.now() - timestamp < CACHE_TTL
-  
+
   // Memoized KPI calculations
   const memoizedKPIs = useMemo(() => {
     if (!orders.length || !items.length) return null
-    
+
     const totalOrders = orders.length
-    const todaysOrders = orders.filter(o => 
+    const todaysOrders = orders.filter(o =>
       new Date(o.created_at).toDateString() === new Date().toDateString()
     ).length
     const pendingOrders = orders.filter(o => o.status === 'reserved').length
@@ -140,57 +140,66 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
       const ordersCache = cacheRef.current.orders
       const itemsCache = cacheRef.current.items
       const companiesCache = cacheRef.current.companies
-      
+
       // Initialize fetch tasks array
       const fetchTasks: Array<{
         type: 'orders' | 'items' | 'companies'
         fetch: () => Promise<any>
       }> = []
-      
+
       // Check and prepare each data type
       if (!isCacheValid(ordersCache.timestamp)) {
         fetchTasks.push({
           type: 'orders',
-          fetch: () => supabase.from('orders')
-            .select('*')
-            .order('created_at', { ascending: false })
-            .limit(ordersCache.pagination.limit)
+          fetch: async () => {
+            const result = await supabase.from('orders')
+              .select('*')
+              .order('created_at', { ascending: false })
+              .limit(ordersCache.pagination.limit)
+            return result
+          }
         })
       } else {
         setOrders(ordersCache.data)
         setLoading(prev => ({ ...prev, orders: false }))
       }
-      
+
       if (!isCacheValid(itemsCache.timestamp)) {
         fetchTasks.push({
           type: 'items',
-          fetch: () => supabase.from('items')
-            .select('*')
-            .order('name')
-            .limit(itemsCache.pagination.limit)
+          fetch: async () => {
+            const result = await supabase.from('items')
+              .select('*')
+              .order('name')
+              .limit(itemsCache.pagination.limit)
+            return result
+          }
         })
       } else {
         setItems(itemsCache.data)
         setLoading(prev => ({ ...prev, items: false }))
       }
-      
+
       if (!isCacheValid(companiesCache.timestamp)) {
         fetchTasks.push({
           type: 'companies',
-          fetch: () => supabase.from('companies')
-            .select('*')
-            .order('name')
-            .limit(companiesCache.pagination.limit)
+          fetch: async () => {
+            const result = await supabase.from('companies')
+              .select('*')
+              .order('name')
+              .limit(companiesCache.pagination.limit)
+            return result
+          }
         })
       } else {
         setCompanies(companiesCache.data)
         setLoading(prev => ({ ...prev, companies: false }))
       }
-      
+
       // Execute all fetch tasks in parallel
       if (fetchTasks.length > 0) {
         const results = await Promise.allSettled(fetchTasks.map(task => task.fetch()))
-        
+
         // Process results and update state/cache
         results.forEach((result, index) => {
           const task = fetchTasks[index]
@@ -243,10 +252,10 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
     try {
       const transportCache = cacheRef.current.transportCompanies
       const auditCache = cacheRef.current.auditLogs
-      
+
       const promises = []
       const loadingStates: Array<'transportCompanies' | 'auditLogs'> = []
-      
+
       if (!isCacheValid(transportCache.timestamp)) {
         setLoading(prev => ({ ...prev, transportCompanies: true }))
         loadingStates.push('transportCompanies')
@@ -260,7 +269,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
         setTransportCompanies(transportCache.data)
         setLoading(prev => ({ ...prev, transportCompanies: false }))
       }
-      
+
       if (!isCacheValid(auditCache.timestamp)) {
         setLoading(prev => ({ ...prev, auditLogs: true }))
         loadingStates.push('auditLogs')
@@ -274,11 +283,11 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
         setAuditLogs(auditCache.data)
         setLoading(prev => ({ ...prev, auditLogs: false }))
       }
-      
+
       if (promises.length > 0) {
         const results = await Promise.all(promises)
         let resultIndex = 0
-        
+
         if (loadingStates.includes('transportCompanies')) {
           const transportData = results[resultIndex].data || []
           setTransportCompanies(transportData)
@@ -286,7 +295,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
           setLoading(prev => ({ ...prev, transportCompanies: false }))
           resultIndex++
         }
-        
+
         if (loadingStates.includes('auditLogs')) {
           const auditData = results[resultIndex].data || []
           setAuditLogs(auditData)
@@ -429,7 +438,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
       const { order_items, ...orderFields } = orderData
       console.log('Order fields:', orderFields)
       console.log('Order items:', order_items)
-      
+
       const { data, error } = await supabase
         .from('orders')
         .insert([orderFields])
