@@ -19,10 +19,10 @@ export default function SplashScreen() {
       
       sessionStorage.setItem('splashShown', 'true')
       
-      // Auto-dismiss after 8 seconds
+      // Auto-dismiss after 5 seconds
       setTimeout(() => {
         setIsVisible(false)
-      }, 8000)
+      }, 5000)
     }
   }, [])
 
@@ -121,7 +121,7 @@ export default function SplashScreen() {
             <motion.div
               initial={{ scaleX: 0 }}
               animate={{ scaleX: 1 }}
-              transition={{ duration: 7.5, ease: "linear" }}
+              transition={{ duration: 4.5, ease: "linear" }}
               className="absolute bottom-0 left-0 h-1 bg-white/30 origin-left"
               style={{ width: '100%' }}
             />
