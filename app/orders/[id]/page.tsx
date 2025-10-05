@@ -86,10 +86,14 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
         console.error('Error deleting order:', error)
         alert('Failed to delete order. Please try again.')
       } else {
-        // Refresh orders list
-        await refetch.orders()
-        alert('Order deleted successfully!')
+        console.log('Order deleted, refreshing and redirecting...')
+        // Navigate first, then refresh in background
         router.push('/orders')
+        // Refresh orders list in background
+        refetch.orders().then(() => {
+          console.log('Orders refreshed after delete')
+        })
+        alert('Order deleted successfully!')
       }
     } catch (error) {
       console.error('Error deleting order:', error)

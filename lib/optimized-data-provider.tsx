@@ -336,6 +336,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
   }, [memoizedKPIs])
 
   const refreshOrders = useCallback(async () => {
+    console.log('refreshOrders called')
     setLoading(prev => ({ ...prev, orders: true }))
     try {
       const { data, error } = await supabase
@@ -354,12 +355,20 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
         .order('created_at', { ascending: false })
         .limit(100)
 
+      console.log('Orders fetched:', data?.length)
       if (error) throw error
       setOrders(data || [])
+      // Update cache
+      cacheRef.current.orders = {
+        data: data || [],
+        timestamp: Date.now(),
+        pagination: cacheRef.current.orders.pagination
+      }
     } catch (error) {
       console.error('Error fetching orders:', error)
     } finally {
       setLoading(prev => ({ ...prev, orders: false }))
+      console.log('refreshOrders finished')
     }
   }, [])
 
