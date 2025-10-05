@@ -59,19 +59,33 @@ export default function SetupPage() {
       if (error) {
         setError(error.message)
       } else if (data.user) {
-        // Create admin profile
-        const { error: profileError } = await supabase
+        // Wait a moment for the database trigger to create the profile
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        
+        // Update the profile to admin role (trigger creates it as staff)
+        const { error: updateError } = await supabase
           .from('user_profiles')
-          .insert([{
-            id: data.user.id,
-            email: formData.email,
-            full_name: formData.fullName,
-            role: 'admin'
-          }])
+          .update({ role: 'admin' })
+          .eq('id', data.user.id)
 
-        if (profileError) {
-          console.error('Error creating admin profile:', profileError)
-          setError('Account created but failed to set admin role. Please contact support.')
+        if (updateError) {
+          // If update failed, try to insert
+          const { error: profileError } = await supabase
+            .from('user_profiles')
+            .insert([{
+              id: data.user.id,
+              email: formData.email,
+              full_name: formData.fullName,
+              role: 'admin'
+            }])
+
+          if (profileError) {
+            console.error('Error creating admin profile:', profileError)
+            setError('Account created but failed to set admin role. Please contact support.')
+          } else {
+            alert('Admin account created successfully! You can now sign in.')
+            router.push('/login')
+          }
         } else {
           alert('Admin account created successfully! You can now sign in.')
           router.push('/login')

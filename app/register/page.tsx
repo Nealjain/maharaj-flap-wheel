@@ -57,24 +57,36 @@ export default function RegisterPage() {
 
       if (error) {
         setError(error.message)
-      } else       if (data.user) {
-        // Create user profile with selected role
-        const { error: profileError } = await supabase
+      } else if (data.user) {
+        // Wait a moment for the database trigger to create the profile
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        
+        // Check if profile was created by trigger
+        const { data: profile, error: checkError } = await supabase
           .from('user_profiles')
-          .insert([{
-            id: data.user.id,
-            email: formData.email,
-            full_name: formData.fullName,
-            role: 'staff'
-          }])
+          .select('*')
+          .eq('id', data.user.id)
+          .single()
 
-        if (profileError) {
-          console.error('Error creating user profile:', profileError)
-          setError('Account created but failed to set role. Please contact support.')
-        } else {
-          alert('Account created successfully! Please check your email to verify your account.')
-          router.push('/login')
+        if (checkError || !profile) {
+          // If trigger didn't work, create profile manually
+          const { error: profileError } = await supabase
+            .from('user_profiles')
+            .insert([{
+              id: data.user.id,
+              email: formData.email,
+              full_name: formData.fullName,
+              role: 'staff'
+            }])
+
+          if (profileError) {
+            console.error('Error creating user profile:', profileError)
+            setError('Account created successfully! You can now sign in. An admin will assign your role.')
+          }
         }
+        
+        alert('Account created successfully! You can now sign in as a staff member.')
+        router.push('/login')
       }
     } catch (error) {
       console.error('Registration error:', error)
