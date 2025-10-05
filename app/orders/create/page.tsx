@@ -150,8 +150,12 @@ export default function CreateOrderPage() {
       addToast('You must be logged in to create an order.', 'error')
       return
     }
-    if (!selectedCompany || orderItems.length === 0) {
-      addToast('Please select a company and add at least one item.', 'error')
+    if (!selectedCompany) {
+      addToast('Please select a company from the dropdown.', 'error')
+      return
+    }
+    if (orderItems.length === 0) {
+      addToast('Please add at least one item to the order.', 'error')
       return
     }
 
@@ -277,10 +281,13 @@ export default function CreateOrderPage() {
                     value={companySearch}
                     onChange={(e) => {
                       setCompanySearch(e.target.value)
+                      setSelectedCompany('') // Clear selection when typing
                       setShowCompanyDropdown(true)
                     }}
                     onFocus={() => setShowCompanyDropdown(true)}
-                    className="block w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
+                    className={`block w-full pl-10 pr-10 py-2 border rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white ${
+                      selectedCompany ? 'border-green-500 dark:border-green-500' : 'border-gray-300 dark:border-gray-600'
+                    }`}
                     placeholder="Search or type company name..."
                     required
                   />
