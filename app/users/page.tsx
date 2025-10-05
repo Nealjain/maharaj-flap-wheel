@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Layout from '@/components/Layout'
 import { useAuth } from '@/lib/auth'
-import { supabase } from '@/lib/supabase'
 import { 
   UserIcon,
   ShieldCheckIcon,
@@ -36,13 +35,14 @@ export default function UsersPage() {
   const fetchUsers = async () => {
     setLoading(true)
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false })
+      const response = await fetch('/api/users')
+      const result = await response.json()
 
-      if (error) throw error
-      setUsers(data || [])
+      if (result.error) {
+        throw new Error(result.error)
+      }
+
+      setUsers(result.users || [])
     } catch (error) {
       console.error('Error fetching users:', error)
       alert('Failed to fetch users')
@@ -58,12 +58,19 @@ export default function UsersPage() {
 
     setUpdatingUserId(userId)
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ role: newRole })
-        .eq('id', userId)
+      const response = await fetch('/api/users', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ userId, role: newRole })
+      })
 
-      if (error) throw error
+      const result = await response.json()
+
+      if (result.error) {
+        throw new Error(result.error)
+      }
 
       // Update local state
       setUsers(prev => prev.map(user => 
