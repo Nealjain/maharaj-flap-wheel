@@ -65,30 +65,36 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
 
     setLoading(true)
     try {
-      console.log('Sending partial delivery request:', partialDeliveries)
+      console.log('Updating delivery quantities:', partialDeliveries)
       
-      const response = await fetch(`/api/orders/${order.id}/partial-delivery`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ deliveries: partialDeliveries })
-      })
+      // Direct database update - much faster!
+      for (const [itemId, deliveredQty] of Object.entries(partialDeliveries)) {
+        const { error } = await supabase
+          .from('order_items')
+          .update({ delivered_quantity: deliveredQty })
+          .eq('order_id', order.id)
+          .eq('item_id', itemId)
 
-      const result = await response.json()
-      console.log('Partial delivery response:', result)
-
-      if (!response.ok || result.error) {
-        throw new Error(result.error || `Server error: ${response.status}`)
+        if (error) {
+          console.error('Error updating item:', error)
+          throw error
+        }
       }
 
-      // Refresh orders
-      await refetch.orders()
+      // Update local state immediately - no refetch needed!
+      setOrder((prev: any) => ({
+        ...prev,
+        order_items: prev.order_items.map((item: any) => ({
+          ...item,
+          delivered_quantity: partialDeliveries[item.item_id] || item.delivered_quantity
+        }))
+      }))
+
       setShowPartialModal(false)
-      alert('✅ Partial delivery recorded successfully!')
+      alert('✅ Delivery recorded!')
     } catch (error: any) {
-      console.error('Error recording partial delivery:', error)
-      alert(`❌ Failed to record delivery: ${error.message}`)
+      console.error('Error recording delivery:', error)
+      alert(`❌ Failed: ${error.message}`)
     } finally {
       setLoading(false)
     }

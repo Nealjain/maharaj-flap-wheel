@@ -98,8 +98,8 @@ export default function CreateOrderPage() {
         ...prev,
         {
           item_id: item.id,
-          quantity: 1,
-          price: 0, // Default price, user can change
+          quantity: 0,
+          price: 0,
           name: item.name,
           sku: item.sku,
           unit: item.unit,
@@ -114,7 +114,7 @@ export default function CreateOrderPage() {
   const handleUpdateItemQuantity = (itemId: string, quantity: number) => {
     setOrderItems(prev =>
       prev.map(item =>
-        item.item_id === itemId ? { ...item, quantity: Math.max(1, quantity) } : item
+        item.item_id === itemId ? { ...item, quantity: Math.max(0, quantity) } : item
       )
     )
   }
@@ -156,6 +156,13 @@ export default function CreateOrderPage() {
     }
     if (orderItems.length === 0) {
       addToast('Please add at least one item to the order.', 'error')
+      return
+    }
+    
+    // Validate that all items have quantity > 0
+    const invalidItems = orderItems.filter(item => item.quantity <= 0)
+    if (invalidItems.length > 0) {
+      addToast('Please enter a valid quantity for all items (must be greater than 0).', 'error')
       return
     }
 
@@ -473,9 +480,10 @@ export default function CreateOrderPage() {
                       type="number"
                       min="1"
                       max={orderItem.available_stock}
-                      value={orderItem.quantity || ''}
-                      onChange={(e) => handleUpdateItemQuantity(orderItem.item_id, parseInt(e.target.value) || 1)}
+                      value={orderItem.quantity === 0 ? '' : orderItem.quantity}
+                      onChange={(e) => handleUpdateItemQuantity(orderItem.item_id, parseInt(e.target.value) || 0)}
                       className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-white"
+                      placeholder="0"
                     />
                   </div>
                   
@@ -485,7 +493,7 @@ export default function CreateOrderPage() {
                       type="number"
                       min="0"
                       step="0.01"
-                      value={orderItem.price || ''}
+                      value={orderItem.price === 0 ? '' : orderItem.price}
                       onChange={(e) => handleUpdateItemPrice(orderItem.item_id, parseFloat(e.target.value) || 0)}
                       className="w-24 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-white"
                       placeholder="0.00"
