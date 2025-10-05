@@ -8,7 +8,8 @@ import {
   UserIcon,
   ShieldCheckIcon,
   UserGroupIcon,
-  MagnifyingGlassIcon
+  MagnifyingGlassIcon,
+  ClockIcon
 } from '@heroicons/react/24/outline'
 
 interface User {
@@ -249,6 +250,9 @@ export default function UsersPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Actions
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Activity
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -296,6 +300,14 @@ export default function UsersPage() {
                         <option value="staff">Staff</option>
                         <option value="admin">Admin</option>
                       </select>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button
+                        onClick={() => router.push(`/users/${user.id}/activity`)}
+                        className="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300"
+                      >
+                        View Activity
+                      </button>
                     </td>
                   </motion.tr>
                 ))}

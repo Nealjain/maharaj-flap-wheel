@@ -545,9 +545,10 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
 
       // Log audit event (don't wait for it)
       supabase.from('audit_logs').insert([{
-        event_type: 'ORDER_CREATED',
+        event_type: 'CREATE',
         entity: 'orders',
         entity_id: orderId,
+        performed_by: user?.id,
         payload: {
           company_id: orderFields.company_id,
           transport_company_id: orderFields.transport_company_id,
@@ -585,6 +586,9 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
 
       if (error) throw error
 
+      // Log audit event
+      await logAuditEvent('UPDATE', 'orders', id, updates)
+
       refreshOrders().catch(err => console.error('Error refreshing orders:', err))
 
       return { error: null }
@@ -596,11 +600,17 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
 
   const createItem = async (itemData: any) => {
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('items')
         .insert([itemData])
+        .select()
 
       if (error) throw error
+
+      // Log audit event
+      if (data && data[0]) {
+        await logAuditEvent('CREATE', 'items', data[0].id, itemData)
+      }
 
       refreshItems().catch(err => console.error('Error refreshing items:', err))
 
@@ -620,6 +630,9 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
 
       if (error) throw error
 
+      // Log audit event
+      await logAuditEvent('UPDATE', 'items', id, updates)
+
       refreshItems().catch(err => console.error('Error refreshing items:', err))
 
       return { error: null }
@@ -638,6 +651,9 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
 
       if (error) throw error
 
+      // Log audit event
+      await logAuditEvent('DELETE', 'items', id)
+
       refreshItems().catch(err => console.error('Error refreshing items:', err))
 
       return { error: null }
@@ -649,11 +665,17 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
 
   const createCompany = async (companyData: any) => {
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('companies')
         .insert([companyData])
+        .select()
 
       if (error) throw error
+
+      // Log audit event
+      if (data && data[0]) {
+        await logAuditEvent('CREATE', 'companies', data[0].id, companyData)
+      }
 
       refreshCompanies().catch(err => console.error('Error refreshing companies:', err))
 
@@ -673,6 +695,9 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
 
       if (error) throw error
 
+      // Log audit event
+      await logAuditEvent('UPDATE', 'companies', id, updates)
+
       refreshCompanies().catch(err => console.error('Error refreshing companies:', err))
 
       return { error: null }
@@ -691,6 +716,9 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
 
       if (error) throw error
 
+      // Log audit event
+      await logAuditEvent('DELETE', 'companies', id)
+
       refreshCompanies().catch(err => console.error('Error refreshing companies:', err))
 
       return { error: null }
@@ -703,12 +731,18 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
   const createTransportCompany = async (data: any) => {
     console.log('createTransportCompany called with:', data)
     try {
-      const { error } = await supabase
+      const { data: result, error } = await supabase
         .from('transport_companies')
         .insert([data])
+        .select()
 
       console.log('Transport company insert result:', { error })
       if (error) throw error
+
+      // Log audit event
+      if (result && result[0]) {
+        await logAuditEvent('CREATE', 'transport_companies', result[0].id, data)
+      }
 
       console.log('Triggering transport companies refresh...')
       refreshTransportCompanies().then(() => {
@@ -733,6 +767,9 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
 
       if (error) throw error
 
+      // Log audit event
+      await logAuditEvent('UPDATE', 'transport_companies', id, updates)
+
       refreshTransportCompanies().catch(err => console.error('Error refreshing transport companies:', err))
 
       return { error: null }
@@ -751,6 +788,9 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
 
       if (error) throw error
 
+      // Log audit event
+      await logAuditEvent('DELETE', 'transport_companies', id)
+
       refreshTransportCompanies().catch(err => console.error('Error refreshing transport companies:', err))
 
       return { error: null }
@@ -766,6 +806,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
         event_type: eventType,
         entity: entity,
         entity_id: entityId,
+        performed_by: user?.id,
         payload: payload
       }])
     } catch (error) {

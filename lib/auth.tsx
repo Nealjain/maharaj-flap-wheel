@@ -75,16 +75,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
+    
+    // Log login activity
+    if (data?.user) {
+      try {
+        await supabase.from('login_activities').insert({
+          user_id: data.user.id,
+          success: true,
+          ip: null, // Will be set by server if needed
+          user_agent: typeof window !== 'undefined' ? window.navigator.userAgent : null
+        })
+      } catch (logError) {
+        console.error('Error logging login activity:', logError)
+      }
+    } else if (error) {
+      // Log failed login attempt (if we have user info)
+      console.error('Login failed:', error)
+    }
+    
     return { error }
   }
 
   const signOut = async () => {
     setLoading(true)
     try {
+      // Log logout activity before signing out
+      if (user) {
+        try {
+          await supabase.from('audit_logs').insert({
+            event_type: 'LOGOUT',
+            entity: 'auth',
+            entity_id: user.id,
+            performed_by: user.id,
+            payload: { timestamp: new Date().toISOString() }
+          })
+        } catch (logError) {
+          console.error('Error logging logout activity:', logError)
+        }
+      }
+      
       await supabase.auth.signOut()
       setUser(null)
       setProfile(null)

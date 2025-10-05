@@ -388,37 +388,65 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
               </h2>
               
               {order.order_items && order.order_items.length > 0 ? (
-                <div className="space-y-3">
-                  {order.order_items.map((item: any, index: number) => (
-                    <motion.div
-                      key={item.item_id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
-                    >
-                      <div className="flex-1">
-                        <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-                          {item.item?.name || 'Unknown Item'}
-                        </h4>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          SKU: {item.item?.sku || 'N/A'}
-                        </p>
-                      </div>
-                      
-                      <div className="flex items-center space-x-4 text-sm">
-                        <span className="text-gray-500 dark:text-gray-400">
-                          Qty: {item.quantity}
-                        </span>
-                        <span className="text-gray-500 dark:text-gray-400">
-                          ₹{item.price.toFixed(2)} each
-                        </span>
-                        <span className="font-medium text-gray-900 dark:text-white">
-                          ₹{(item.quantity * item.price).toFixed(2)}
-                        </span>
-                      </div>
-                    </motion.div>
-                  ))}
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-700">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Item</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">SKU</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Description</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Ordered</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Delivered</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Pending</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Price</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                      {order.order_items.map((item: any, index: number) => {
+                        const delivered = item.delivered_quantity || 0
+                        const pending = item.quantity - delivered
+                        return (
+                          <motion.tr
+                            key={item.item_id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                            className="hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                          >
+                            <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
+                              {item.item?.name || 'Unknown Item'}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                              {item.item?.sku || 'N/A'}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                              {item.item?.description || '-'}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-white">
+                              {item.quantity}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-right">
+                              <span className={delivered > 0 ? 'text-green-600 dark:text-green-400 font-medium' : 'text-gray-500 dark:text-gray-400'}>
+                                {delivered}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-right">
+                              <span className={pending > 0 ? 'text-orange-600 dark:text-orange-400 font-medium' : 'text-gray-500 dark:text-gray-400'}>
+                                {pending}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-white">
+                              ₹{item.price.toFixed(2)}
+                            </td>
+                            <td className="px-4 py-3 text-sm text-right font-medium text-gray-900 dark:text-white">
+                              ₹{(item.quantity * item.price).toFixed(2)}
+                            </td>
+                          </motion.tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               ) : (
                 <p className="text-gray-500 dark:text-gray-400 text-center py-8">
