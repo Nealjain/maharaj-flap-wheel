@@ -44,10 +44,20 @@ export default function UserActivityPage({ params }: ActivityPageProps) {
   const fetchActivity = async () => {
     setLoading(true)
     try {
-      const response = await fetch(`/api/users/${userId}/activity`)
+      // Get the session token
+      const { supabase } = await import('@/lib/supabase')
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      const headers: HeadersInit = {}
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`
+      }
+
+      const response = await fetch(`/api/users/${userId}/activity`, { headers })
       const result = await response.json()
 
       if (result.error) {
+        console.error('Activity fetch error:', result)
         throw new Error(result.error)
       }
 
@@ -55,7 +65,7 @@ export default function UserActivityPage({ params }: ActivityPageProps) {
       setLoginActivities(result.loginActivities || [])
     } catch (error) {
       console.error('Error fetching activity:', error)
-      alert('Failed to fetch user activity')
+      alert('Failed to fetch user activity. Please try again.')
     } finally {
       setLoading(false)
     }
