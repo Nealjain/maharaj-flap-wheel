@@ -9,7 +9,6 @@ import { useAuth } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
 import { 
   ArrowLeftIcon,
-  CheckCircleIcon,
   ClockIcon,
   XCircleIcon,
   BuildingOfficeIcon,
@@ -59,27 +58,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
     }
   }, [orders, orderId])
 
-  const handleCompleteOrder = async () => {
-    if (!isAdmin || !order) return
 
-    setLoading(true)
-    try {
-      const { error } = await updateOrder(order.id, { status: 'completed' })
-      
-      if (error) {
-        console.error('Error completing order:', error)
-        alert('Failed to complete order. Please try again.')
-      } else {
-        setOrder({ ...order, status: 'completed' })
-        alert('Order marked as completed!')
-      }
-    } catch (error) {
-      console.error('Error completing order:', error)
-      alert('Failed to complete order. Please try again.')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handlePartialDelivery = async () => {
     if (!isAdmin || !order) return
@@ -199,7 +178,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
       },
       completed: { 
         color: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300',
-        icon: CheckCircleIcon,
+        icon: ClockIcon,
         label: 'Completed'
       },
       cancelled: { 
@@ -271,27 +250,10 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
                     </button>
                     <button
                       onClick={() => setShowPartialModal(true)}
-                      className="inline-flex items-center px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 whitespace-nowrap"
+                      className="inline-flex items-center px-3 sm:px-4 py-2 border border-primary-600 dark:border-primary-500 rounded-md shadow-sm text-xs sm:text-sm font-medium text-primary-600 dark:text-primary-400 bg-white dark:bg-gray-800 hover:bg-primary-50 dark:hover:bg-primary-900/20 whitespace-nowrap"
                     >
                       <DeliveryIcon className="h-4 w-4 sm:mr-2" />
-                      <span className="hidden sm:inline">Partial Delivery</span>
-                    </button>
-                    <button
-                      onClick={handleCompleteOrder}
-                      disabled={loading}
-                      className="inline-flex items-center px-3 sm:px-4 py-2 border border-transparent rounded-md shadow-sm text-xs sm:text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                    >
-                      {loading ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white sm:mr-2"></div>
-                          <span className="hidden sm:inline">Completing...</span>
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircleIcon className="h-4 w-4 sm:mr-2" />
-                          <span className="hidden sm:inline">Mark Complete</span>
-                        </>
-                      )}
+                      <span className="hidden sm:inline">Record Delivery</span>
                     </button>
                   </>
                 )}
