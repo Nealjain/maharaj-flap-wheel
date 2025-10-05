@@ -4,7 +4,19 @@ import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import Layout from '@/components/Layout'
 import Link from 'next/link'
-import { PlusIcon, MagnifyingGlassIcon, ArrowPathIcon, EyeIcon, CheckCircleIcon, ClockIcon, XCircleIcon } from '@heroicons/react/24/outline'
+import { 
+  PlusIcon, 
+  MagnifyingGlassIcon, 
+  ArrowPathIcon, 
+  EyeIcon, 
+  CheckCircleIcon, 
+  ClockIcon, 
+  XCircleIcon,
+  BuildingOfficeIcon,
+  TruckIcon,
+  CubeIcon,
+  ChevronRightIcon
+} from '@heroicons/react/24/outline'
 import { useData } from '@/lib/optimized-data-provider'
 import CSVExport from '@/components/CSVExport'
 import ProgressiveLoader from '@/components/ProgressiveLoader'
@@ -184,96 +196,113 @@ export default function OrdersPage() {
                 </div>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {filteredOrders.map((order, index) => (
                   <motion.div
                     key={order.id}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6 border border-gray-200 dark:border-gray-600 hover:shadow-md transition-shadow duration-200"
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                            Order #{order.id.substring(0, 8)}...
-                          </h3>
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                            {getStatusIcon(order.status)}
-                            <span className="ml-1">{order.status === 'reserved' ? 'Pending' : order.status}</span>
+                    <Link
+                      href={`/orders/${order.id}`}
+                      className="block bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700 hover:shadow-lg hover:border-primary-300 dark:hover:border-primary-700 transition-all duration-200 active:scale-[0.98]"
+                    >
+                      {/* Header */}
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="text-base font-bold text-gray-900 dark:text-white truncate">
+                              #{order.id.substring(0, 8)}
+                            </h3>
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${getStatusColor(order.status)}`}>
+                              {getStatusIcon(order.status)}
+                              <span className="ml-1">{order.status === 'reserved' ? 'Pending' : order.status}</span>
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </p>
+                        </div>
+                        <EyeIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                      </div>
+
+                      {/* Company & Transport */}
+                      <div className="space-y-2 mb-3 pb-3 border-b border-gray-100 dark:border-gray-700">
+                        <div className="flex items-center gap-2">
+                          <BuildingOfficeIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                          <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                            {order.company?.name || 'N/A'}
                           </span>
                         </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                          <div>
-                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Company</p>
-                            <p className="text-sm text-gray-900 dark:text-white">{order.company?.name || 'N/A'}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Transport</p>
-                            <p className="text-sm text-gray-900 dark:text-white">{order.transport_company?.name || 'N/A'}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Items</p>
-                            <p className="text-sm text-gray-900 dark:text-white">{getTotalItems(order)}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Quantity</p>
-                            <p className="text-sm font-bold text-gray-900 dark:text-white">{order.order_items?.reduce((sum: number, item: any) => sum + item.quantity, 0) || 0}</p>
-                          </div>
-                        </div>
-
-                        {order.order_items && order.order_items.length > 0 && (
-                          <div className="mb-4">
-                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Items:</p>
-                            <div className="space-y-1">
-                              {order.order_items.map((item: any, idx) => {
-                                const delivered = item.delivered_quantity || 0
-                                const remaining = item.quantity - delivered
-                                return (
-                                  <div key={idx} className="flex justify-between items-center text-sm">
-                                    <div className="flex-1">
-                                      <span className="text-gray-900 dark:text-white">
-                                        {item.item?.name || 'Unknown Item'}
-                                      </span>
-                                      {remaining > 0 && (
-                                        <span className="ml-2 text-xs text-orange-600 dark:text-orange-400">
-                                          ({remaining} pending)
-                                        </span>
-                                      )}
-                                      {remaining === 0 && delivered > 0 && (
-                                        <span className="ml-2 text-xs text-green-600 dark:text-green-400">
-                                          (✓ delivered)
-                                        </span>
-                                      )}
-                                    </div>
-                                    <span className="text-gray-600 dark:text-gray-400">
-                                      Qty: {item.quantity}
-                                    </span>
-                                  </div>
-                                )
-                              })}
-                            </div>
+                        {order.transport_company && (
+                          <div className="flex items-center gap-2">
+                            <TruckIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                            <span className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                              {order.transport_company.name}
+                            </span>
                           </div>
                         )}
+                      </div>
 
-                        <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-                          <span>Created: {new Date(order.created_at).toLocaleDateString()}</span>
-                          <span>Updated: {new Date(order.updated_at).toLocaleDateString()}</span>
+                      {/* Items Summary */}
+                      {order.order_items && order.order_items.length > 0 && (
+                        <div className="space-y-2 mb-3">
+                          {order.order_items.slice(0, 2).map((item: any, idx) => {
+                            const delivered = item.delivered_quantity || 0
+                            const remaining = item.quantity - delivered
+                            return (
+                              <div key={idx} className="flex items-center justify-between text-sm">
+                                <div className="flex-1 min-w-0 mr-2">
+                                  <p className="font-medium text-gray-900 dark:text-white truncate">
+                                    {item.item?.name || 'Unknown Item'}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                                      Qty: {item.quantity}
+                                    </span>
+                                    {remaining > 0 && (
+                                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+                                        {remaining} pending
+                                      </span>
+                                    )}
+                                    {remaining === 0 && delivered > 0 && (
+                                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                                        ✓ Delivered
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            )
+                          })}
+                          {order.order_items.length > 2 && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              +{order.order_items.length - 2} more items
+                            </p>
+                          )}
                         </div>
-                      </div>
+                      )}
 
-                      <div className="ml-4 flex-shrink-0">
-                        <Link
-                          href={`/orders/${order.id}`}
-                          className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
-                        >
-                          <EyeIcon className="h-4 w-4 mr-2" />
-                          View Details
-                        </Link>
+                      {/* Footer Stats */}
+                      <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700">
+                        <div className="flex items-center gap-4 text-xs">
+                          <div className="flex items-center gap-1">
+                            <CubeIcon className="h-4 w-4 text-gray-400" />
+                            <span className="text-gray-600 dark:text-gray-400">
+                              {getTotalItems(order)} items
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="font-semibold text-gray-900 dark:text-white">
+                              {order.order_items?.reduce((sum: number, item: any) => sum + item.quantity, 0) || 0}
+                            </span>
+                            <span className="text-gray-600 dark:text-gray-400">total qty</span>
+                          </div>
+                        </div>
+                        <ChevronRightIcon className="h-5 w-5 text-gray-400" />
                       </div>
-                    </div>
+                    </Link>
                   </motion.div>
                 ))}
               </div>
