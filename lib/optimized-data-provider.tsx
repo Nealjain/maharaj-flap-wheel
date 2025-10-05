@@ -128,6 +128,19 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
     if (!user) return
 
     try {
+      // Add timeout to prevent infinite loading
+      const loadingTimeout = setTimeout(() => {
+        console.warn('Data loading timeout - forcing completion')
+        setLoading({
+          orders: false,
+          items: false,
+          companies: false,
+          transportCompanies: false,
+          auditLogs: false,
+          dashboardKPIs: false
+        })
+      }, 10000) // 10 second timeout
+
       // Set loading states
       setLoading(prev => ({
         ...prev,
@@ -161,6 +174,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
                   item_id,
                   quantity,
                   price,
+                  delivered_quantity,
                   item:items(id, name, sku, unit)
                 )
               `)
@@ -206,9 +220,18 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
         setLoading(prev => ({ ...prev, companies: false }))
       }
 
-      // Execute all fetch tasks in parallel
+      // Execute all fetch tasks in parallel with timeout
       if (fetchTasks.length > 0) {
-        const results = await Promise.allSettled(fetchTasks.map(task => task.fetch()))
+        const fetchWithTimeout = (task: any) => {
+          return Promise.race([
+            task.fetch(),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error(`${task.type} fetch timeout`)), 5000)
+            )
+          ])
+        }
+        
+        const results = await Promise.allSettled(fetchTasks.map(task => fetchWithTimeout(task)))
 
         // Process results and update state/cache
         results.forEach((result, index) => {
@@ -250,8 +273,19 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
           setLoading(prev => ({ ...prev, [task.type]: false }))
         })
       }
+      
+      clearTimeout(loadingTimeout)
     } catch (error) {
       console.error('Error loading essential data:', error)
+      // Force clear all loading states on error
+      setLoading({
+        orders: false,
+        items: false,
+        companies: false,
+        transportCompanies: false,
+        auditLogs: false,
+        dashboardKPIs: false
+      })
     }
   }, [user])
 
@@ -349,6 +383,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
             item_id,
             quantity,
             price,
+            delivered_quantity,
             item:items(id, name, sku, unit)
           )
         `)

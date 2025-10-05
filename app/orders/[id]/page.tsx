@@ -237,8 +237,8 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
     )
   }
 
-  const totalAmount = order.order_items?.reduce((sum: number, item: any) => 
-    sum + (item.quantity * item.price), 0
+  const totalQuantity = order.order_items?.reduce((sum: number, item: any) => 
+    sum + item.quantity, 0
   ) || 0
 
   return (
@@ -387,8 +387,6 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
                         <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Qty</th>
                         <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase hidden sm:table-cell">Delivered</th>
                         <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase hidden sm:table-cell">Pending</th>
-                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase hidden md:table-cell">Price</th>
-                        <th className="px-2 sm:px-4 py-2 sm:py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Total</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -435,12 +433,6 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
                                 {pending}
                               </span>
                             </td>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right text-gray-900 dark:text-white hidden md:table-cell">
-                              ₹{item.price.toFixed(2)}
-                            </td>
-                            <td className="px-2 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-right font-medium text-gray-900 dark:text-white">
-                              ₹{(item.quantity * item.price).toFixed(2)}
-                            </td>
                           </motion.tr>
                         )
                       })}
@@ -479,9 +471,9 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
                 
                 <div className="border-t border-gray-200 dark:border-gray-600 pt-3">
                   <div className="flex justify-between text-lg font-semibold">
-                    <span className="text-gray-900 dark:text-white">Total Amount:</span>
+                    <span className="text-gray-900 dark:text-white">Total Quantity:</span>
                     <span className="text-primary-600 dark:text-primary-400">
-                      ₹{totalAmount.toFixed(2)}
+                      {totalQuantity}
                     </span>
                   </div>
                 </div>

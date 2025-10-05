@@ -14,7 +14,7 @@ import { useToast } from '@/lib/toast'
 interface SelectedItem {
   item_id: string
   quantity: number
-  price: number
+  due_date?: string
   name: string
   sku: string
   unit: string
@@ -99,7 +99,7 @@ export default function CreateOrderPage() {
         {
           item_id: item.id,
           quantity: 0,
-          price: 0,
+          due_date: '',
           name: item.name,
           sku: item.sku,
           unit: item.unit,
@@ -119,10 +119,10 @@ export default function CreateOrderPage() {
     )
   }
 
-  const handleUpdateItemPrice = (itemId: string, price: number) => {
+  const handleUpdateItemDueDate = (itemId: string, dueDate: string) => {
     setOrderItems(prev =>
       prev.map(item =>
-        item.item_id === itemId ? { ...item, price: Math.max(0, price) } : item
+        item.item_id === itemId ? { ...item, due_date: dueDate } : item
       )
     )
   }
@@ -180,7 +180,8 @@ export default function CreateOrderPage() {
         order_items: orderItems.map(oi => ({
           item_id: oi.item_id,
           quantity: oi.quantity,
-          price: oi.price
+          price: 0, // Price removed from UI but kept in DB for compatibility
+          due_date: oi.due_date || null
         }))
       }
 
@@ -395,19 +396,6 @@ export default function CreateOrderPage() {
               </div>
             </div>
 
-            {/* Due Date */}
-            <div className="mt-6">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Due Date (Optional)
-              </label>
-              <input
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
-              />
-            </div>
-
             {/* Notes */}
             <div className="mt-6">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -468,49 +456,45 @@ export default function CreateOrderPage() {
             {/* Selected Items */}
             <div className="space-y-4">
               {orderItems.map((orderItem, index) => (
-                <div key={orderItem.item_id} className="flex items-center space-x-4 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                  <div className="flex-1">
-                    <h4 className="font-medium text-gray-900 dark:text-white">{orderItem.name}</h4>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">SKU: {orderItem.sku} | Available: {orderItem.available_stock} {orderItem.unit}</p>
+                <div key={orderItem.item_id} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex-1">
+                      <h4 className="font-medium text-gray-900 dark:text-white">{orderItem.name}</h4>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">SKU: {orderItem.sku} | Available: {orderItem.available_stock} {orderItem.unit}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveItem(orderItem.item_id)}
+                      className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200"
+                    >
+                      <TrashIcon className="h-5 w-5" />
+                    </button>
                   </div>
                   
-                  <div className="flex items-center space-x-2">
-                    <label className="text-sm text-gray-700 dark:text-gray-300">Qty:</label>
-                    <input
-                      type="number"
-                      min="1"
-                      max={orderItem.available_stock}
-                      value={orderItem.quantity === 0 ? '' : orderItem.quantity}
-                      onChange={(e) => handleUpdateItemQuantity(orderItem.item_id, parseInt(e.target.value) || 0)}
-                      className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-white"
-                      placeholder="0"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Quantity *</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max={orderItem.available_stock}
+                        value={orderItem.quantity === 0 ? '' : orderItem.quantity}
+                        onChange={(e) => handleUpdateItemQuantity(orderItem.item_id, parseInt(e.target.value) || 0)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-white"
+                        placeholder="Enter quantity"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Due Date (Optional)</label>
+                      <input
+                        type="date"
+                        value={orderItem.due_date || ''}
+                        onChange={(e) => handleUpdateItemDueDate(orderItem.item_id, e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-white"
+                      />
+                    </div>
                   </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <label className="text-sm text-gray-700 dark:text-gray-300">Price:</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={orderItem.price === 0 ? '' : orderItem.price}
-                      onChange={(e) => handleUpdateItemPrice(orderItem.item_id, parseFloat(e.target.value) || 0)}
-                      className="w-24 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-white"
-                      placeholder="0.00"
-                    />
-                  </div>
-                  
-                  <div className="text-sm font-medium text-gray-900 dark:text-white">
-                    ₹{(orderItem.quantity * orderItem.price).toFixed(2)}
-                  </div>
-                  
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveItem(orderItem.item_id)}
-                    className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200"
-                  >
-                    <TrashIcon className="h-5 w-5" />
-                  </button>
                 </div>
               ))}
             </div>
@@ -518,9 +502,15 @@ export default function CreateOrderPage() {
             {orderItems.length > 0 && (
               <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
                 <div className="flex justify-between items-center">
-                  <span className="text-lg font-semibold text-gray-900 dark:text-white">Total:</span>
+                  <span className="text-lg font-semibold text-gray-900 dark:text-white">Total Items:</span>
                   <span className="text-lg font-bold text-gray-900 dark:text-white">
-                    ₹{orderItems.reduce((total, item) => total + (item.quantity * item.price), 0).toFixed(2)}
+                    {orderItems.length}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center mt-2">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Total Quantity:</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                    {orderItems.reduce((total, item) => total + item.quantity, 0)}
                   </span>
                 </div>
               </div>

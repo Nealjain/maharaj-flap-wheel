@@ -219,8 +219,8 @@ export default function OrdersPage() {
                             <p className="text-sm text-gray-900 dark:text-white">{getTotalItems(order)}</p>
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Amount</p>
-                            <p className="text-sm font-bold text-gray-900 dark:text-white">₹{calculateOrderTotal(order).toFixed(2)}</p>
+                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Quantity</p>
+                            <p className="text-sm font-bold text-gray-900 dark:text-white">{order.order_items?.reduce((sum: number, item: any) => sum + item.quantity, 0) || 0}</p>
                           </div>
                         </div>
 
@@ -228,16 +228,32 @@ export default function OrdersPage() {
                           <div className="mb-4">
                             <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Items:</p>
                             <div className="space-y-1">
-                              {order.order_items.map((item, idx) => (
-                                <div key={idx} className="flex justify-between text-sm">
-                                  <span className="text-gray-900 dark:text-white">
-                                    {item.item?.name || 'Unknown Item'} ({item.item?.sku || 'N/A'})
-                                  </span>
-                                  <span className="text-gray-600 dark:text-gray-400">
-                                    {item.quantity} × ₹{item.price} = ₹{(item.quantity * item.price).toFixed(2)}
-                                  </span>
-                                </div>
-                              ))}
+                              {order.order_items.map((item: any, idx) => {
+                                const delivered = item.delivered_quantity || 0
+                                const remaining = item.quantity - delivered
+                                return (
+                                  <div key={idx} className="flex justify-between items-center text-sm">
+                                    <div className="flex-1">
+                                      <span className="text-gray-900 dark:text-white">
+                                        {item.item?.name || 'Unknown Item'}
+                                      </span>
+                                      {remaining > 0 && (
+                                        <span className="ml-2 text-xs text-orange-600 dark:text-orange-400">
+                                          ({remaining} pending)
+                                        </span>
+                                      )}
+                                      {remaining === 0 && delivered > 0 && (
+                                        <span className="ml-2 text-xs text-green-600 dark:text-green-400">
+                                          (✓ delivered)
+                                        </span>
+                                      )}
+                                    </div>
+                                    <span className="text-gray-600 dark:text-gray-400">
+                                      Qty: {item.quantity}
+                                    </span>
+                                  </div>
+                                )
+                              })}
                             </div>
                           </div>
                         )}

@@ -78,6 +78,7 @@ export interface OrderItem {
   item_id: string
   quantity: number
   price: number
+  delivered_quantity?: number
   item?: Item
 }
 
