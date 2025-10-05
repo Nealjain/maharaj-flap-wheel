@@ -64,22 +64,38 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
     if (!isAdmin || !order) return
 
     setLoading(true)
+    
+    // Add timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
+      setLoading(false)
+      alert('❌ Request timed out. Please check your connection.')
+    }, 10000) // 10 second timeout
+
     try {
       console.log('Updating delivery quantities:', partialDeliveries)
       
-      // Direct database update - much faster!
-      for (const [itemId, deliveredQty] of Object.entries(partialDeliveries)) {
-        const { error } = await supabase
+      // Update all items in parallel - super fast!
+      const updates = Object.entries(partialDeliveries).map(([itemId, deliveredQty]) => {
+        console.log(`Updating item ${itemId} to ${deliveredQty}`)
+        return supabase
           .from('order_items')
           .update({ delivered_quantity: deliveredQty })
           .eq('order_id', order.id)
           .eq('item_id', itemId)
+      })
 
-        if (error) {
-          console.error('Error updating item:', error)
-          throw error
-        }
+      console.log(`Executing ${updates.length} parallel updates...`)
+      const results = await Promise.all(updates)
+      console.log('Update results:', results)
+      
+      // Check for errors
+      const errors = results.filter(r => r.error)
+      if (errors.length > 0) {
+        console.error('Errors updating items:', errors)
+        throw new Error(errors[0].error?.message || 'Update failed')
       }
+
+      console.log('✅ All items updated successfully')
 
       // Update local state immediately - no refetch needed!
       setOrder((prev: any) => ({
@@ -90,10 +106,12 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
         }))
       }))
 
+      clearTimeout(timeout)
       setShowPartialModal(false)
       alert('✅ Delivery recorded!')
     } catch (error: any) {
       console.error('Error recording delivery:', error)
+      clearTimeout(timeout)
       alert(`❌ Failed: ${error.message}`)
     } finally {
       setLoading(false)
