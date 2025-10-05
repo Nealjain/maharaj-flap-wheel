@@ -3,10 +3,10 @@ import { supabase } from '@/lib/supabase'
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const orderId = params.id
+    const { id: orderId } = await params
 
     // Update order status to completed
     const { error: orderError } = await supabase

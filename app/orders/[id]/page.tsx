@@ -168,23 +168,32 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
             {isAdmin && (
               <>
                 {order.status === 'reserved' && (
-                  <button
-                    onClick={handleCompleteOrder}
-                    disabled={loading}
-                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Completing...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircleIcon className="h-4 w-4 mr-2" />
-                        Mark Complete
-                      </>
-                    )}
-                  </button>
+                  <>
+                    <button
+                      onClick={() => router.push(`/orders/${order.id}/edit`)}
+                      className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      <PencilIcon className="h-4 w-4 mr-2" />
+                      Edit Order
+                    </button>
+                    <button
+                      onClick={handleCompleteOrder}
+                      disabled={loading}
+                      className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {loading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Completing...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircleIcon className="h-4 w-4 mr-2" />
+                          Mark Complete
+                        </>
+                      )}
+                    </button>
+                  </>
                 )}
                 <button
                   onClick={handleDeleteOrder}

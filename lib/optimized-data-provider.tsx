@@ -338,7 +338,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
   const refreshOrders = useCallback(async () => {
     setLoading(prev => ({ ...prev, orders: true }))
     try {
-      const { data, error} = await supabase
+      const { data, error } = await supabase
         .from('orders')
         .select(`
           *,
