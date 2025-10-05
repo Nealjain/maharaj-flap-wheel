@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import Layout from '@/components/Layout'
 import { useAuth } from '@/lib/auth'
@@ -21,6 +22,7 @@ interface User {
 }
 
 export default function UsersPage() {
+  const router = useRouter()
   const { isAdmin } = useAuth()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
