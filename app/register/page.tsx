@@ -9,7 +9,9 @@ import {
   EyeSlashIcon,
   SunIcon,
   MoonIcon,
-  UserPlusIcon
+  UserPlusIcon,
+  CheckCircleIcon,
+  XCircleIcon
 } from '@heroicons/react/24/outline'
 import { useTheme } from '@/lib/theme'
 
@@ -26,6 +28,8 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [emailCheckLoading, setEmailCheckLoading] = useState(false)
+  const [emailExists, setEmailExists] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -44,7 +48,25 @@ export default function RegisterPage() {
     setIsSubmitting(true)
 
     try {
+      // Check if email already exists
+      console.log('Checking if email exists:', formData.email)
+      const { data: existingUsers, error: checkError } = await supabase
+        .from('user_profiles')
+        .select('email')
+        .eq('email', formData.email.toLowerCase())
+        .limit(1)
+
+      if (checkError) {
+        console.error('Error checking email:', checkError)
+        // Continue anyway - Supabase auth will handle duplicates
+      } else if (existingUsers && existingUsers.length > 0) {
+        setError('An account with this email already exists. Please sign in instead.')
+        setIsSubmitting(false)
+        return
+      }
+
       // Sign up with Supabase Auth
+      console.log('Creating new account for:', formData.email)
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -56,7 +78,13 @@ export default function RegisterPage() {
       })
 
       if (error) {
-        setError(error.message)
+        console.error('Signup error:', error)
+        // Check for specific duplicate email error
+        if (error.message.includes('already registered') || error.message.includes('already exists')) {
+          setError('An account with this email already exists. Please sign in instead.')
+        } else {
+          setError(error.message)
+        }
       } else if (data.user) {
         // Wait a moment for the database trigger to create the profile
         await new Promise(resolve => setTimeout(resolve, 1000))
@@ -102,6 +130,34 @@ export default function RegisterPage() {
       ...prev,
       [name]: value
     }))
+
+    // Check email availability when email field changes
+    if (name === 'email' && value.includes('@')) {
+      checkEmailAvailability(value)
+    }
+  }
+
+  const checkEmailAvailability = async (email: string) => {
+    if (!email || !email.includes('@')) return
+
+    setEmailCheckLoading(true)
+    setEmailExists(false)
+
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('email')
+        .eq('email', email.toLowerCase())
+        .limit(1)
+
+      if (!error && data && data.length > 0) {
+        setEmailExists(true)
+      }
+    } catch (error) {
+      console.error('Error checking email:', error)
+    } finally {
+      setEmailCheckLoading(false)
+    }
   }
 
   return (
@@ -177,7 +233,7 @@ export default function RegisterPage() {
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Email address
               </label>
-              <div className="mt-1">
+              <div className="mt-1 relative">
                 <input
                   id="email"
                   name="email"
@@ -186,10 +242,42 @@ export default function RegisterPage() {
                   required
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white sm:text-sm"
+                  className={`appearance-none block w-full px-3 py-2 pr-10 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white sm:text-sm ${
+                    emailExists 
+                      ? 'border-red-300 dark:border-red-600' 
+                      : 'border-gray-300 dark:border-gray-600'
+                  }`}
                   placeholder="Enter your email"
                 />
+                {emailCheckLoading && (
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600"></div>
+                  </div>
+                )}
+                {!emailCheckLoading && emailExists && (
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <XCircleIcon className="h-5 w-5 text-red-500" />
+                  </div>
+                )}
+                {!emailCheckLoading && formData.email.includes('@') && !emailExists && (
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <CheckCircleIcon className="h-5 w-5 text-green-500" />
+                  </div>
+                )}
               </div>
+              {emailExists && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  This email is already registered. Please{' '}
+                  <button
+                    type="button"
+                    onClick={() => router.push('/login')}
+                    className="font-medium underline hover:text-red-700 dark:hover:text-red-300"
+                  >
+                    sign in instead
+                  </button>
+                  .
+                </p>
+              )}
             </div>
 
 
@@ -256,13 +344,18 @@ export default function RegisterPage() {
             <div>
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || emailExists || emailCheckLoading}
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                     Creating Account...
+                  </>
+                ) : emailExists ? (
+                  <>
+                    <XCircleIcon className="h-4 w-4 mr-2" />
+                    Email Already Exists
                   </>
                 ) : (
                   <>
