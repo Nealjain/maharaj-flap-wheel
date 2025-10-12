@@ -163,6 +163,34 @@ export default function StockPage() {
     setShowDeleteModal(true)
   }
 
+  const handleDeleteItem = async (item: any) => {
+    if (!confirm(`⚠️ PERMANENTLY DELETE "${item.name}"?\n\nThis will:\n- Delete the item completely\n- Remove all stock history\n- Cannot be undone\n\nAre you absolutely sure?`)) {
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('items')
+        .delete()
+        .eq('id', item.id)
+
+      if (error) {
+        console.error('Error deleting item:', error)
+        if (error.message?.includes('foreign key') || error.code === '23503') {
+          alert('❌ Cannot delete this item because it is used in orders.\n\nPlease remove it from all orders first.')
+        } else {
+          alert(`❌ Failed to delete item: ${error.message}`)
+        }
+      } else {
+        alert('✅ Item deleted successfully!')
+        window.location.reload()
+      }
+    } catch (error: any) {
+      console.error('Error deleting item:', error)
+      alert(`❌ Failed to delete item: ${error.message || 'Unknown error'}`)
+    }
+  }
+
   const handleConfirmDelete = async () => {
     if (!deletingItem || deleteQuantity <= 0) {
       alert('Please enter a valid quantity to remove')
@@ -432,8 +460,15 @@ export default function StockPage() {
                                 </button>
                                 <button
                                   onClick={() => handleDeleteStock(item)}
+                                  className="text-orange-600 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300"
+                                  title="Remove stock quantity"
+                                >
+                                  <ArrowDownIcon className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteItem(item)}
                                   className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                                  title="Delete/Remove stock"
+                                  title="Delete item permanently"
                                 >
                                   <TrashIcon className="h-4 w-4" />
                                 </button>
