@@ -21,14 +21,21 @@ export default function Layout({ children, requireAuth = true, requireAdmin = fa
   useEffect(() => {
     if (!loading) {
       if (requireAuth && !user) {
-        router.push('/login')
-        return
+        console.log('Layout: No user found, redirecting to login')
+        // Add a small delay to prevent race conditions
+        const timer = setTimeout(() => {
+          router.push('/login')
+        }, 100)
+        return () => clearTimeout(timer)
       }
       
       if (requireAdmin && !isAdmin) {
+        console.log('Layout: User is not admin, redirecting to dashboard')
         router.push('/dashboard')
         return
       }
+    } else {
+      console.log('Layout: Auth still loading...')
     }
   }, [user, loading, isAdmin, requireAuth, requireAdmin, router])
 

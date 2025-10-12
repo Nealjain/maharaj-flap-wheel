@@ -28,7 +28,8 @@ export default function LoginPage() {
     // Only redirect if we have a confirmed user and auth is not loading
     if (user && !loading) {
       console.log('User authenticated, redirecting to dashboard...', user.email)
-      router.push('/dashboard')
+      // Use replace instead of push to prevent back button issues
+      router.replace('/dashboard')
     }
   }, [user, loading, router])
 

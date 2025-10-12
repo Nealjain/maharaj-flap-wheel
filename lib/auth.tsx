@@ -117,6 +117,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUserProfile = async (userId: string) => {
     try {
+      console.log('Fetching profile for user:', userId)
+      
       // Add timeout for profile fetch
       const profilePromise = supabase
         .from('user_profiles')
@@ -132,39 +134,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('Error fetching user profile:', error)
+        console.log('Profile error details:', {
+          message: error.message,
+          code: error.code,
+          details: error.details
+        })
         setProfile(null)
       } else {
+        console.log('Profile fetched successfully:', data)
         setProfile(data)
       }
     } catch (error) {
       console.error('Error fetching user profile:', error)
       setProfile(null)
     } finally {
+      console.log('Setting loading to false')
       setLoading(false)
     }
   }
 
   const signIn = async (email: string, password: string) => {
+    console.log('SignIn: Starting login process for', email)
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
     
-    // Log login activity
+    if (error) {
+      console.error('SignIn: Login failed:', error)
+      return { error }
+    }
+    
+    console.log('SignIn: Auth successful, user:', data.user?.email)
+    
+    // Wait for profile to be fetched
     if (data?.user) {
+      console.log('SignIn: Fetching user profile...')
       try {
+        await fetchUserProfile(data.user.id)
+        console.log('SignIn: Profile fetched successfully')
+        
+        // Log login activity
         await supabase.from('login_activities').insert({
           user_id: data.user.id,
           success: true,
-          ip: null, // Will be set by server if needed
+          ip: null,
           user_agent: typeof window !== 'undefined' ? window.navigator.userAgent : null
         })
       } catch (logError) {
-        console.error('Error logging login activity:', logError)
+        console.error('SignIn: Error in post-login process:', logError)
       }
-    } else if (error) {
-      // Log failed login attempt (if we have user info)
-      console.error('Login failed:', error)
     }
     
     return { error }
