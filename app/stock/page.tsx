@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import Layout from '@/components/Layout'
 import { useData } from '@/lib/optimized-data-provider'
 import CSVExport from '@/components/CSVExport'
+import { supabase } from '@/lib/supabase'
 import {
   PlusIcon,
   MagnifyingGlassIcon,
@@ -17,7 +18,8 @@ import {
   ArrowUpIcon,
   ArrowDownIcon,
   ChevronLeftIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline'
 
 export default function StockPage() {
@@ -32,6 +34,9 @@ export default function StockPage() {
     physical_stock: 0,
     reserved_stock: 0
   })
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deletingItem, setDeletingItem] = useState<any>(null)
+  const [deleteQuantity, setDeleteQuantity] = useState(0)
 
   // Memoized filtering logic
   const filteredItems = useMemo(() => {
@@ -150,6 +155,43 @@ export default function StockPage() {
   const handleCancelEdit = () => {
     setEditingItem(null)
     setEditForm({ physical_stock: 0, reserved_stock: 0 })
+  }
+
+  const handleDeleteStock = (item: any) => {
+    setDeletingItem(item)
+    setDeleteQuantity(0)
+    setShowDeleteModal(true)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!deletingItem || deleteQuantity <= 0) {
+      alert('Please enter a valid quantity to remove')
+      return
+    }
+
+    try {
+      // Use the add_stock_with_ledger function with negative quantity
+      const { data, error } = await supabase.rpc('add_stock_with_ledger', {
+        p_item_id: deletingItem.id,
+        p_quantity: -deleteQuantity, // Negative to remove
+        p_notes: `Stock removed via Stock Management`
+      })
+
+      if (error) {
+        console.error('Error removing stock:', error)
+        alert('Failed to remove stock. Please try again.')
+      } else {
+        alert(`Successfully removed ${deleteQuantity} ${deletingItem.custom_unit || deletingItem.unit}`)
+        setShowDeleteModal(false)
+        setDeletingItem(null)
+        setDeleteQuantity(0)
+        // Refresh the page to show updated stock
+        window.location.reload()
+      }
+    } catch (error) {
+      console.error('Error removing stock:', error)
+      alert('Failed to remove stock. Please try again.')
+    }
   }
 
   const exportData = filteredItems.map(item => ({
@@ -367,23 +409,35 @@ export default function StockPage() {
                                 <button
                                   onClick={() => handleSaveStock(item.id)}
                                   className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
+                                  title="Save"
                                 >
                                   <CheckCircleIcon className="h-4 w-4" />
                                 </button>
                                 <button
                                   onClick={handleCancelEdit}
                                   className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                                  title="Cancel"
                                 >
                                   <XCircleIcon className="h-4 w-4" />
                                 </button>
                               </div>
                             ) : (
-                              <button
-                                onClick={() => handleEditStock(item)}
-                                className="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300"
-                              >
-                                <PencilIcon className="h-4 w-4" />
-                              </button>
+                              <div className="flex items-center space-x-2">
+                                <button
+                                  onClick={() => handleEditStock(item)}
+                                  className="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300"
+                                  title="Edit stock"
+                                >
+                                  <PencilIcon className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteStock(item)}
+                                  className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                                  title="Delete/Remove stock"
+                                >
+                                  <TrashIcon className="h-4 w-4" />
+                                </button>
+                              </div>
                             )}
                           </td>
                         </motion.tr>
@@ -471,6 +525,99 @@ export default function StockPage() {
           )}
         </div>
       </div>
+
+      {/* Delete Stock Modal */}
+      {showDeleteModal && deletingItem && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4">
+            <div className="fixed inset-0 bg-black opacity-50" onClick={() => setShowDeleteModal(false)}></div>
+            
+            <div className="relative bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 z-10">
+              <div className="flex items-center mb-4">
+                <div className="flex-shrink-0">
+                  <TrashIcon className="h-6 w-6 text-red-600 dark:text-red-400" />
+                </div>
+                <h3 className="ml-3 text-lg font-semibold text-gray-900 dark:text-white">
+                  Remove Stock
+                </h3>
+              </div>
+              
+              <div className="mb-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  Remove stock from <strong>{deletingItem.name}</strong>
+                </p>
+                
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 mb-4">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600 dark:text-gray-400">Current Stock:</span>
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      {deletingItem.physical_stock} {deletingItem.custom_unit || deletingItem.unit}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm mt-2">
+                    <span className="text-gray-600 dark:text-gray-400">Reserved:</span>
+                    <span className="font-medium text-gray-900 dark:text-white">
+                      {deletingItem.reserved_stock} {deletingItem.custom_unit || deletingItem.unit}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm mt-2">
+                    <span className="text-gray-600 dark:text-gray-400">Available:</span>
+                    <span className="font-medium text-primary-600 dark:text-primary-400">
+                      {deletingItem.physical_stock - deletingItem.reserved_stock} {deletingItem.custom_unit || deletingItem.unit}
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Quantity to Remove *
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={deleteQuantity || ''}
+                    onChange={(e) => setDeleteQuantity(parseInt(e.target.value) || 0)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
+                    placeholder="Enter quantity to remove"
+                    autoFocus
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    This will reduce the physical stock and create a ledger entry
+                  </p>
+                </div>
+
+                {deleteQuantity > 0 && (
+                  <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                    <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                      New stock will be: <strong>{deletingItem.physical_stock - deleteQuantity} {deletingItem.custom_unit || deletingItem.unit}</strong>
+                    </p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false)
+                    setDeletingItem(null)
+                    setDeleteQuantity(0)
+                  }}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmDelete}
+                  disabled={deleteQuantity <= 0}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Remove Stock
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   )
 }
