@@ -23,14 +23,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let mounted = true
+    
     // Add timeout to prevent infinite loading
     const loadingTimeout = setTimeout(() => {
-      console.warn('Auth loading timeout - forcing completion')
-      setLoading(false)
+      if (mounted) {
+        console.warn('Auth loading timeout - forcing completion')
+        setLoading(false)
+      }
     }, 5000) // 5 second timeout
 
     // Get initial session
     supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (!mounted) return
       clearTimeout(loadingTimeout)
       
       if (error) {
@@ -43,6 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return
       }
       
+      console.log('Initial session:', session ? 'Found' : 'None')
       setSession(session)
       setUser(session?.user ?? null)
       if (session?.user) {
@@ -51,6 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false)
       }
     }).catch((error) => {
+      if (!mounted) return
       clearTimeout(loadingTimeout)
       console.error('Failed to get session:', error)
       setSession(null)
@@ -59,34 +66,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false)
     })
     
-    return () => clearTimeout(loadingTimeout)
+    return () => {
+      mounted = false
+      clearTimeout(loadingTimeout)
+    }
 
     // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event)
+      console.log('Auth state changed:', event, session?.user?.email || 'no user')
       
-      // Handle token refresh errors
-      if (event === 'TOKEN_REFRESHED') {
+      // Handle different auth events
+      if (event === 'SIGNED_IN') {
+        console.log('User signed in successfully')
+        setSession(session)
+        setUser(session?.user ?? null)
+        if (session?.user) {
+          await fetchUserProfile(session.user.id)
+        }
+      } else if (event === 'TOKEN_REFRESHED') {
         console.log('Token refreshed successfully')
+        setSession(session)
+        setUser(session?.user ?? null)
       } else if (event === 'SIGNED_OUT') {
         console.log('User signed out')
         setSession(null)
         setUser(null)
         setProfile(null)
         setLoading(false)
-        return
-      }
-      
-      setSession(session)
-      setUser(session?.user ?? null)
-      
-      if (session?.user) {
-        await fetchUserProfile(session.user.id)
+      } else if (event === 'USER_UPDATED') {
+        console.log('User updated')
+        setSession(session)
+        setUser(session?.user ?? null)
       } else {
-        setProfile(null)
-        setLoading(false)
+        // Handle other events
+        setSession(session)
+        setUser(session?.user ?? null)
+        if (session?.user) {
+          await fetchUserProfile(session.user.id)
+        } else {
+          setProfile(null)
+          setLoading(false)
+        }
       }
     })
 

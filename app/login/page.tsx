@@ -25,7 +25,9 @@ export default function LoginPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    // Only redirect if we have a confirmed user and auth is not loading
     if (user && !loading) {
+      console.log('User authenticated, redirecting to dashboard...', user.email)
       router.push('/dashboard')
     }
   }, [user, loading, router])
@@ -36,19 +38,21 @@ export default function LoginPage() {
     setError('')
 
     try {
+      console.log('Attempting login for:', formData.email)
       const { error } = await signIn(formData.email, formData.password)
       
       if (error) {
+        console.error('Login error:', error)
         setError('Invalid email or password')
+        setIsSubmitting(false)
       } else {
-        // Wait for auth state to update before redirecting
-        setTimeout(() => {
-          router.push('/dashboard')
-        }, 100)
+        console.log('Login successful, waiting for auth state update...')
+        // Don't set isSubmitting to false - let the useEffect handle redirect
+        // The useEffect will redirect when user state updates
       }
     } catch (error) {
+      console.error('Login exception:', error)
       setError('An error occurred. Please try again.')
-    } finally {
       setIsSubmitting(false)
     }
   }
