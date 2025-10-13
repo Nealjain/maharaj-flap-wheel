@@ -21,6 +21,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isSignedOut, setIsSignedOut] = useState(false)
 
   useEffect(() => {
     let mounted = true
@@ -77,32 +78,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state changed:', event, session?.user?.email || 'no user')
       
+      // Update state immediately for all events
+      setSession(session)
+      setUser(session?.user ?? null)
+      
       // Handle different auth events
       if (event === 'SIGNED_IN') {
         console.log('User signed in successfully')
-        setSession(session)
-        setUser(session?.user ?? null)
         if (session?.user) {
           await fetchUserProfile(session.user.id)
         }
       } else if (event === 'TOKEN_REFRESHED') {
         console.log('Token refreshed successfully')
-        setSession(session)
-        setUser(session?.user ?? null)
       } else if (event === 'SIGNED_OUT') {
-        console.log('User signed out')
-        setSession(null)
-        setUser(null)
+        console.log('User signed out - clearing all data')
         setProfile(null)
         setLoading(false)
+        setIsSignedOut(true)
+        // Clear all storage to prevent back button access
+        if (typeof window !== 'undefined') {
+          localStorage.clear()
+          sessionStorage.clear()
+          localStorage.setItem('signed_out', 'true')
+          // Force reload to clear any cached state
+          window.location.href = '/login'
+        }
       } else if (event === 'USER_UPDATED') {
         console.log('User updated')
-        setSession(session)
-        setUser(session?.user ?? null)
       } else {
         // Handle other events
-        setSession(session)
-        setUser(session?.user ?? null)
         if (session?.user) {
           await fetchUserProfile(session.user.id)
         } else {
@@ -190,6 +194,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
+    console.log('SignOut: Starting logout process')
     setLoading(true)
     try {
       // Log logout activity before signing out
@@ -207,7 +212,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
       
+      console.log('SignOut: Calling Supabase signOut')
       await supabase.auth.signOut()
+      
+      console.log('SignOut: Clearing state and storage')
       setUser(null)
       setProfile(null)
       setSession(null)
@@ -216,6 +224,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (typeof window !== 'undefined') {
         localStorage.clear()
         sessionStorage.clear()
+        
+        // Prevent back button by replacing history
+        window.history.pushState(null, '', '/login')
+        window.history.replaceState(null, '', '/login')
+        
+        // Force reload to clear any cached state
+        setTimeout(() => {
+          window.location.href = '/login'
+        }, 100)
       }
     } catch (error) {
       console.error('Error signing out:', error)
@@ -226,6 +243,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (typeof window !== 'undefined') {
         localStorage.clear()
         sessionStorage.clear()
+        window.location.href = '/login'
       }
     } finally {
       setLoading(false)

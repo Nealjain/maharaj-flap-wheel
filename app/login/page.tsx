@@ -25,6 +25,14 @@ export default function LoginPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    // Check if user just signed out
+    const signedOut = typeof window !== 'undefined' && localStorage.getItem('signed_out')
+    if (signedOut) {
+      console.log('User recently signed out, staying on login page')
+      localStorage.removeItem('signed_out')
+      return
+    }
+    
     // Only redirect if we have a confirmed user and auth is not loading
     if (user && !loading) {
       console.log('User authenticated, redirecting to dashboard...', user.email)
