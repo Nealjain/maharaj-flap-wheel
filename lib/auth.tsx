@@ -171,8 +171,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     console.log('SignIn: Auth successful, user:', data.user?.email)
     
-    // Wait for profile to be fetched
-    if (data?.user) {
+    // Set user and session immediately
+    if (data?.user && data?.session) {
+      console.log('SignIn: Setting user and session state')
+      setUser(data.user)
+      setSession(data.session)
+      
+      // Fetch profile
       console.log('SignIn: Fetching user profile...')
       try {
         await fetchUserProfile(data.user.id)
