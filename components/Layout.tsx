@@ -4,8 +4,8 @@ import { useAuth } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import Sidebar from './Sidebar'
+import TopNav from './TopNav'
 import ProgressiveLoader from './ProgressiveLoader'
-import MobileBottomNav from './MobileBottomNav'
 import PageTransition from './PageTransition'
 
 interface LayoutProps {
@@ -47,8 +47,9 @@ export default function Layout({ children, requireAuth = true, requireAdmin = fa
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
       <Sidebar />
+      <TopNav />
       <main className="flex-1 w-full lg:ml-0">
-        <div className="p-4 sm:p-6 lg:p-8 pt-16 lg:pt-4 pb-4">
+        <div className="p-4 sm:p-6 lg:p-8 pt-20 lg:pt-4 pb-4">
           <PageTransition>
             {children}
           </PageTransition>

@@ -10,22 +10,25 @@ import {
   ArrowPathIcon, 
   EyeIcon, 
   CheckCircleIcon, 
-  ClockIcon, 
+  ClockIcon as ClockIconOutline, 
   XCircleIcon,
   BuildingOfficeIcon,
   TruckIcon,
   CubeIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  DocumentTextIcon
 } from '@heroicons/react/24/outline'
 import { useData } from '@/lib/optimized-data-provider'
 import CSVExport from '@/components/CSVExport'
 import ProgressiveLoader from '@/components/ProgressiveLoader'
+import OrderLedger from '@/components/OrderLedger'
 import { Order } from '@/lib/supabase'
 
 export default function OrdersPage() {
   const { orders, companies, transportCompanies, items, loading, refetch } = useData()
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('All')
+  const [showLedger, setShowLedger] = useState(false)
 
   const filteredOrders = useMemo(() => {
     let filtered = orders || []
@@ -60,13 +63,13 @@ export default function OrdersPage() {
   const getStatusIcon = (status: Order['status']) => {
     switch (status) {
       case 'reserved':
-        return <ClockIcon className="h-4 w-4" />
+        return <ClockIconOutline className="h-4 w-4" />
       case 'completed':
         return <CheckCircleIcon className="h-4 w-4" />
       case 'cancelled':
         return <XCircleIcon className="h-4 w-4" />
       default:
-        return <ClockIcon className="h-4 w-4" />
+        return <ClockIconOutline className="h-4 w-4" />
     }
   }
 
@@ -134,6 +137,14 @@ export default function OrdersPage() {
             >
               <ArrowPathIcon className="h-4 w-4 sm:-ml-1 sm:mr-2 text-gray-500 dark:text-gray-400" aria-hidden="true" />
               <span className="hidden sm:inline">Refresh</span>
+            </button>
+            <button
+              onClick={() => setShowLedger(true)}
+              className="inline-flex items-center px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+            >
+              <DocumentTextIcon className="h-4 w-4 sm:-ml-1 sm:mr-2 text-gray-500 dark:text-gray-400" aria-hidden="true" />
+              <span className="hidden sm:inline">Order Ledger</span>
+              <span className="sm:hidden">Ledger</span>
             </button>
             <CSVExport data={exportData} headers={exportHeaders} filename="orders_report" />
             <Link href="/orders/create" className="inline-flex items-center px-3 sm:px-4 py-2 border border-transparent rounded-md shadow-sm text-xs sm:text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
@@ -325,6 +336,9 @@ export default function OrdersPage() {
           </div>
         </div>
       </motion.div>
+
+      {/* Order Ledger */}
+      <OrderLedger isOpen={showLedger} onClose={() => setShowLedger(false)} />
     </Layout>
   )
 }
