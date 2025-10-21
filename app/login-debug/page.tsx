@@ -110,10 +110,9 @@ export default function LoginDebugPage() {
       status: 'info',
       message: 'Supabase Configuration',
       config: {
-        url: process.env.NEXT_PUBLIC_SUPABASE_URL || 'Using hardcoded URL',
-        hasAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'Using hardcoded key',
-        supabaseUrl: supabase.supabaseUrl,
-        storageKey: supabase.storageKey
+        url: process.env.NEXT_PUBLIC_SUPABASE_URL || 'Not set in environment',
+        hasAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+        clientInitialized: !!supabase
       }
     })
   }

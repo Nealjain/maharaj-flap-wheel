@@ -19,6 +19,7 @@ interface SelectedItem {
   item_id: string
   quantity: number
   price: number
+  due_date?: string
   name: string
   sku: string
   unit: string
@@ -80,6 +81,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
             item_id: oi.item_id,
             quantity: oi.quantity,
             price: oi.price,
+            due_date: oi.due_date || '',
             name: oi.item?.name || 'Unknown',
             sku: oi.item?.sku || 'N/A',
             unit: oi.item?.unit || 'pcs',
@@ -136,6 +138,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
           item_id: item.id,
           quantity: 1,
           price: 0,
+          due_date: '',
           name: item.name,
           sku: item.sku,
           unit: item.unit,
@@ -159,6 +162,14 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
     setOrderItems(prev =>
       prev.map(item =>
         item.item_id === itemId ? { ...item, price: Math.max(0, price) } : item
+      )
+    )
+  }
+
+  const handleUpdateItemDueDate = (itemId: string, dueDate: string) => {
+    setOrderItems(prev =>
+      prev.map(item =>
+        item.item_id === itemId ? { ...item, due_date: dueDate } : item
       )
     )
   }
@@ -237,6 +248,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
         item_id: oi.item_id,
         quantity: oi.quantity,
         price: oi.price,
+        due_date: oi.due_date || null,
         delivered_quantity: deliveredMap.get(oi.item_id) || 0 // PRESERVE delivered_quantity!
       }))
 
@@ -434,54 +446,68 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
             {/* Selected Items */}
             <div className="space-y-4">
               {orderItems.map((orderItem) => (
-                <div key={orderItem.item_id} className="flex items-center space-x-4 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                  <div className="flex-1">
-                    <h4 className="font-medium text-gray-900 dark:text-white">{orderItem.name}</h4>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">SKU: {orderItem.sku} | Available: {orderItem.available_stock} {orderItem.unit}</p>
+                <div key={orderItem.item_id} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex-1">
+                      <h4 className="font-medium text-gray-900 dark:text-white">{orderItem.name}</h4>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">SKU: {orderItem.sku} | Available: {orderItem.available_stock} {orderItem.unit}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveItem(orderItem.item_id)}
+                      className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200"
+                    >
+                      <TrashIcon className="h-5 w-5" />
+                    </button>
                   </div>
                   
-                  <div className="flex flex-col">
-                    <div className="flex items-center space-x-2">
-                      <label className="text-sm text-gray-700 dark:text-gray-300">Qty:</label>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Quantity *</label>
                       <input
                         type="number"
                         min="1"
                         value={orderItem.quantity || ''}
                         onChange={(e) => handleUpdateItemQuantity(orderItem.item_id, parseInt(e.target.value) || 1)}
-                        className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-white"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-white"
+                      />
+                      {orderItem.quantity > orderItem.available_stock && (
+                        <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                          ⚠️ Exceeds by {orderItem.quantity - orderItem.available_stock}
+                        </p>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Price</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={orderItem.price || ''}
+                        onChange={(e) => handleUpdateItemPrice(orderItem.item_id, parseFloat(e.target.value) || 0)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-white"
+                        placeholder="0.00"
                       />
                     </div>
-                    {orderItem.quantity > orderItem.available_stock && (
-                      <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
-                        ⚠️ Exceeds by {orderItem.quantity - orderItem.available_stock}
-                      </p>
-                    )}
+                    
+                    <div>
+                      <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Due Date (Optional)</label>
+                      <input
+                        type="date"
+                        value={orderItem.due_date || ''}
+                        onChange={(e) => handleUpdateItemDueDate(orderItem.item_id, e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-white"
+                      />
+                    </div>
                   </div>
                   
-                  <div className="flex items-center space-x-2">
-                    <label className="text-sm text-gray-700 dark:text-gray-300">Price:</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={orderItem.price || ''}
-                      onChange={(e) => handleUpdateItemPrice(orderItem.item_id, parseFloat(e.target.value) || 0)}
-                      className="w-24 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-white"
-                      placeholder="0.00"
-                    />
+                  <div className="mt-2 text-right">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Total: </span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">
+                      ₹{(orderItem.quantity * orderItem.price).toFixed(2)}
+                    </span>
                   </div>
-                  
-                  <div className="text-sm font-medium text-gray-900 dark:text-white">
-                    ₹{(orderItem.quantity * orderItem.price).toFixed(2)}
-                  </div>
-                  
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveItem(orderItem.item_id)}
-                    className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200"
-                  >
-                    <TrashIcon className="h-5 w-5" />
-                  </button>
                 </div>
               ))}
             </div>

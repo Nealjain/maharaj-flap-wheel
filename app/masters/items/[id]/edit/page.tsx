@@ -41,7 +41,7 @@ export default function EditItemPage({ params }: EditItemPageProps) {
       const foundItem = items.find(i => i.id === itemId)
       if (foundItem) {
         setItem(foundItem)
-        const hasCustomUnit = foundItem.custom_unit && foundItem.custom_unit.trim() !== ''
+        const hasCustomUnit = !!(foundItem.custom_unit && foundItem.custom_unit.trim() !== '')
         setUseCustomUnit(hasCustomUnit)
         setFormData({
           sku: foundItem.sku,

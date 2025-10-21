@@ -53,6 +53,7 @@ export interface Item {
   name: string
   description?: string
   unit: string
+  custom_unit?: string
   physical_stock: number
   reserved_stock: number
   created_at: string
@@ -66,6 +67,7 @@ export interface Order {
   created_by: string
   status: 'reserved' | 'completed' | 'cancelled'
   notes?: string
+  due_date?: string
   created_at: string
   updated_at: string
   company?: Company
@@ -79,6 +81,7 @@ export interface OrderItem {
   quantity: number
   price: number
   delivered_quantity?: number
+  due_date?: string
   item?: Item
 }
 
