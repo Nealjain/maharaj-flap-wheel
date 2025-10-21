@@ -467,7 +467,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
                                 {item.item?.sku || 'N/A'}
                               </div>
                               {dueDate && (
-                                <div className={`xl:hidden text-xs mt-1 ${isOverdue ? 'text-red-600 dark:text-red-400 font-medium' : isDueSoon ? 'text-orange-600 dark:text-orange-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                                <div className={`xl:hidden text-xs mt-1 font-medium ${isOverdue ? 'text-red-600 dark:text-red-400' : isDueSoon ? 'text-orange-600 dark:text-orange-400' : 'text-blue-600 dark:text-blue-400'}`}>
                                   Due: {formatDate(item.due_date)}
                                 </div>
                               )}
