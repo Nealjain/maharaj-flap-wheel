@@ -264,6 +264,8 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
         .eq('order_id', orderId)
 
       // Insert updated order_items, preserving delivered_quantity
+      console.log('Current orderItems state before insert:', orderItems)
+      
       const itemsToInsert = orderItems.map(oi => ({
         order_id: orderId,
         item_id: oi.item_id,
@@ -274,6 +276,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
       }))
 
       console.log('Items to insert with due dates:', itemsToInsert)
+      console.log('Due dates being sent:', itemsToInsert.map(i => ({ item_id: i.item_id, due_date: i.due_date })))
 
       const { data: insertedData, error: itemsError } = await supabase
         .from('order_items')
@@ -292,13 +295,19 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
       }
       
       console.log('Order items inserted successfully:', insertedData)
+      console.log('Inserted items with due_date:', insertedData?.map((i: any) => ({ item_id: i.item_id, due_date: i.due_date })))
 
       console.log('Order updated successfully, delivered quantities preserved')
       addToast('Order updated successfully!', 'success')
       
       // Refresh orders data before redirecting
+      console.log('Refreshing orders data...')
       await refetch.orders()
       console.log('Orders data refreshed')
+      
+      // Verify the updated order has due dates
+      const updatedOrder = orders.find(o => o.id === orderId)
+      console.log('Updated order from state:', updatedOrder?.order_items?.map((i: any) => ({ item_id: i.item_id, due_date: i.due_date })))
       
       router.push(`/orders/${orderId}`)
     } catch (error: any) {
