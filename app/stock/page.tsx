@@ -31,6 +31,11 @@ export default function StockPage() {
   const [itemsPerPage] = useState(20) // Reduced from loading all items
   const [editingItem, setEditingItem] = useState<string | null>(null)
   const [showLedger, setShowLedger] = useState(false)
+  const [showAdjustModal, setShowAdjustModal] = useState(false)
+  const [selectedItemForAdjust, setSelectedItemForAdjust] = useState<any>(null)
+  const [adjustmentType, setAdjustmentType] = useState<'add' | 'remove' | 'set'>('add')
+  const [adjustmentQuantity, setAdjustmentQuantity] = useState<number>(0)
+  const [adjustmentNotes, setAdjustmentNotes] = useState('')
   const [editForm, setEditForm] = useState({
     physical_stock: 0,
     reserved_stock: 0
@@ -195,7 +200,14 @@ export default function StockPage() {
               Monitor and manage your inventory levels
             </p>
           </div>
-          <div className="mt-4 sm:mt-0">
+          <div className="mt-4 sm:mt-0 flex gap-2">
+            <button
+              onClick={() => setShowAdjustModal(true)}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+            >
+              <ArrowUpIcon className="h-4 w-4 mr-2" />
+              Adjust Stock
+            </button>
             <button
               onClick={() => router.push('/masters/items/create')}
               className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
@@ -475,6 +487,136 @@ export default function StockPage() {
           )}
         </div>
       </div>
+
+      {/* Stock Adjustment Modal */}
+      {showAdjustModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4">
+            <div className="fixed inset-0 bg-black opacity-50" onClick={() => setShowAdjustModal(false)}></div>
+            
+            <div className="relative bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6 z-10">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Adjust Stock
+              </h3>
+              
+              {!selectedItemForAdjust ? (
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Select an item to adjust:</p>
+                  <div className="max-h-96 overflow-y-auto space-y-2">
+                    {items?.map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => setSelectedItemForAdjust(item)}
+                        className="w-full text-left p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600"
+                      >
+                        <div className="font-medium text-gray-900 dark:text-white">{item.name}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          SKU: {item.sku} | Stock: {item.physical_stock}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div className="font-medium text-gray-900 dark:text-white">{selectedItemForAdjust.name}</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      Current Stock: {selectedItemForAdjust.physical_stock}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Adjustment Type
+                    </label>
+                    <select
+                      value={adjustmentType}
+                      onChange={(e) => setAdjustmentType(e.target.value as any)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
+                    >
+                      <option value="add">Add Stock</option>
+                      <option value="remove">Remove Stock</option>
+                      <option value="set">Set Stock</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Quantity
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={adjustmentQuantity}
+                      onChange={(e) => setAdjustmentQuantity(parseInt(e.target.value) || 0)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
+                      placeholder="Enter quantity"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Notes (Optional)
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={adjustmentNotes}
+                      onChange={(e) => setAdjustmentNotes(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
+                      placeholder="Reason for adjustment..."
+                    />
+                  </div>
+
+                  <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <div className="text-sm text-blue-900 dark:text-blue-300">
+                      New Stock: {
+                        adjustmentType === 'add' ? selectedItemForAdjust.physical_stock + adjustmentQuantity :
+                        adjustmentType === 'remove' ? Math.max(0, selectedItemForAdjust.physical_stock - adjustmentQuantity) :
+                        adjustmentQuantity
+                      }
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  onClick={() => {
+                    setShowAdjustModal(false)
+                    setSelectedItemForAdjust(null)
+                    setAdjustmentQuantity(0)
+                    setAdjustmentNotes('')
+                  }}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Cancel
+                </button>
+                {selectedItemForAdjust && (
+                  <button
+                    onClick={async () => {
+                      const newStock = 
+                        adjustmentType === 'add' ? selectedItemForAdjust.physical_stock + adjustmentQuantity :
+                        adjustmentType === 'remove' ? Math.max(0, selectedItemForAdjust.physical_stock - adjustmentQuantity) :
+                        adjustmentQuantity
+
+                      await updateItem(selectedItemForAdjust.id, { physical_stock: newStock })
+                      
+                      setShowAdjustModal(false)
+                      setSelectedItemForAdjust(null)
+                      setAdjustmentQuantity(0)
+                      setAdjustmentNotes('')
+                    }}
+                    className="px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700"
+                  >
+                    Apply Adjustment
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stock Ledger */}
       <StockLedger isOpen={showLedger} onClose={() => setShowLedger(false)} />
