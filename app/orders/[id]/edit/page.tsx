@@ -257,45 +257,71 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
         existingItems?.map(item => [item.item_id, item.delivered_quantity]) || []
       )
 
-      // Delete all existing order_items
-      await supabase
+      // Update each order item individually to preserve delivered_quantity and update due_date
+      console.log('Updating order items with due dates:', orderItems)
+      
+      for (const oi of orderItems) {
+        const existingDelivered = deliveredMap.get(oi.item_id) || 0
+        
+        // Try to update existing item first
+        const { data: existing } = await supabase
+          .from('order_items')
+          .select('*')
+          .eq('order_id', orderId)
+          .eq('item_id', oi.item_id)
+          .single()
+
+        if (existing) {
+          // Update existing item
+          const { error: updateError } = await supabase
+            .from('order_items')
+            .update({
+              quantity: oi.quantity,
+              price: oi.price,
+              due_date: oi.due_date || null
+            })
+            .eq('order_id', orderId)
+            .eq('item_id', oi.item_id)
+
+          if (updateError) {
+            console.error('Error updating item:', oi.item_id, updateError)
+            throw updateError
+          }
+          console.log('Updated item:', oi.item_id, 'with due_date:', oi.due_date)
+        } else {
+          // Insert new item
+          const { error: insertError } = await supabase
+            .from('order_items')
+            .insert({
+              order_id: orderId,
+              item_id: oi.item_id,
+              quantity: oi.quantity,
+              price: oi.price,
+              delivered_quantity: existingDelivered,
+              due_date: oi.due_date || null
+            })
+
+          if (insertError) {
+            console.error('Error inserting item:', oi.item_id, insertError)
+            throw insertError
+          }
+          console.log('Inserted new item:', oi.item_id, 'with due_date:', oi.due_date)
+        }
+      }
+
+      // Delete items that were removed
+      const currentItemIds = orderItems.map(oi => oi.item_id)
+      const { error: deleteError } = await supabase
         .from('order_items')
         .delete()
         .eq('order_id', orderId)
+        .not('item_id', 'in', `(${currentItemIds.join(',')})`)
 
-      // Insert updated order_items, preserving delivered_quantity
-      console.log('Current orderItems state before insert:', orderItems)
-      
-      const itemsToInsert = orderItems.map(oi => ({
-        order_id: orderId,
-        item_id: oi.item_id,
-        quantity: oi.quantity,
-        price: oi.price,
-        delivered_quantity: deliveredMap.get(oi.item_id) || 0, // PRESERVE delivered_quantity!
-        due_date: oi.due_date || null
-      }))
-
-      console.log('Items to insert with due dates:', itemsToInsert)
-      console.log('Due dates being sent:', itemsToInsert.map(i => ({ item_id: i.item_id, due_date: i.due_date })))
-
-      const { data: insertedData, error: itemsError } = await supabase
-        .from('order_items')
-        .insert(itemsToInsert)
-        .select()
-
-      if (itemsError) {
-        console.error('Error inserting order items:', itemsError)
-        console.error('Error details:', {
-          message: itemsError.message,
-          details: itemsError.details,
-          hint: itemsError.hint,
-          code: itemsError.code
-        })
-        throw itemsError
+      if (deleteError) {
+        console.error('Error deleting removed items:', deleteError)
       }
-      
-      console.log('Order items inserted successfully:', insertedData)
-      console.log('Inserted items with due_date:', insertedData?.map((i: any) => ({ item_id: i.item_id, due_date: i.due_date })))
+
+      console.log('All order items updated successfully')
 
       console.log('Order updated successfully, delivered quantities preserved')
       addToast('Order updated successfully!', 'success')
