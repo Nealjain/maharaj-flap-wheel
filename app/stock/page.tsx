@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import Layout from '@/components/Layout'
 import { useData } from '@/lib/optimized-data-provider'
 import CSVExport from '@/components/CSVExport'
+import StockLedger from '@/components/StockLedger'
 import {
   PlusIcon,
   MagnifyingGlassIcon,
@@ -17,7 +18,8 @@ import {
   ArrowUpIcon,
   ArrowDownIcon,
   ChevronLeftIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  DocumentTextIcon
 } from '@heroicons/react/24/outline'
 
 export default function StockPage() {
@@ -28,6 +30,7 @@ export default function StockPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(20) // Reduced from loading all items
   const [editingItem, setEditingItem] = useState<string | null>(null)
+  const [showLedger, setShowLedger] = useState(false)
   const [editForm, setEditForm] = useState({
     physical_stock: 0,
     reserved_stock: 0
@@ -230,6 +233,13 @@ export default function StockPage() {
                 <option value="normal">Normal</option>
                 <option value="over-stock">Over Stock</option>
               </select>
+              <button
+                onClick={() => setShowLedger(true)}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+              >
+                <DocumentTextIcon className="h-4 w-4 mr-2" />
+                Stock Ledger
+              </button>
               <CSVExport
                 data={exportData}
                 headers={['SKU', 'Name', 'Description', 'Unit', 'Physical Stock', 'Reserved Stock', 'Available Stock', 'Status']}
@@ -465,6 +475,9 @@ export default function StockPage() {
           )}
         </div>
       </div>
+
+      {/* Stock Ledger */}
+      <StockLedger isOpen={showLedger} onClose={() => setShowLedger(false)} />
     </Layout>
   )
 }

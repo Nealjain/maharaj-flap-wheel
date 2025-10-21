@@ -57,34 +57,56 @@ export default function OrderLedger({ isOpen, onClose }: OrderLedgerProps) {
         throw logsError
       }
 
-      // Then, get user profiles for the performed_by IDs
-      const userIds = Array.from(new Set(logsData?.map(log => log.performed_by).filter(Boolean)))
-      
-      let userProfiles: any = {}
-      if (userIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from('user_profiles')
-          .select('id, email, full_name')
-          .in('id', userIds)
+      // Get all unique IDs from payloads
+      const companyIds = new Set<string>()
+      const transportIds = new Set<string>()
+      const itemIds = new Set<string>()
+      const userIds = new Set<string>()
 
-        userProfiles = profiles?.reduce((acc: any, profile: any) => {
-          acc[profile.id] = profile
-          return acc
-        }, {}) || {}
-      }
+      logsData?.forEach(log => {
+        if (log.performed_by) userIds.add(log.performed_by)
+        if (log.payload?.company_id) companyIds.add(log.payload.company_id)
+        if (log.payload?.transport_company_id) transportIds.add(log.payload.transport_company_id)
+        if (log.payload?.items) {
+          log.payload.items.forEach((item: any) => {
+            if (item.item_id) itemIds.add(item.item_id)
+          })
+        }
+      })
 
-      // Combine logs with user info
-      const logsWithEmail = logsData?.map(log => ({
+      // Fetch all related data in parallel
+      const [usersRes, companiesRes, transportsRes, itemsRes] = await Promise.all([
+        userIds.size > 0 ? supabase.from('user_profiles').select('id, email, full_name').in('id', Array.from(userIds)) : { data: [] },
+        companyIds.size > 0 ? supabase.from('companies').select('id, name').in('id', Array.from(companyIds)) : { data: [] },
+        transportIds.size > 0 ? supabase.from('transport_companies').select('id, name').in('id', Array.from(transportIds)) : { data: [] },
+        itemIds.size > 0 ? supabase.from('items').select('id, name, sku').in('id', Array.from(itemIds)) : { data: [] }
+      ])
+
+      // Create lookup maps
+      const userMap = usersRes.data?.reduce((acc: any, u: any) => ({ ...acc, [u.id]: u }), {}) || {}
+      const companyMap = companiesRes.data?.reduce((acc: any, c: any) => ({ ...acc, [c.id]: c }), {}) || {}
+      const transportMap = transportsRes.data?.reduce((acc: any, t: any) => ({ ...acc, [t.id]: t }), {}) || {}
+      const itemMap = itemsRes.data?.reduce((acc: any, i: any) => ({ ...acc, [i.id]: i }), {}) || {}
+
+      // Enrich logs with names
+      const enrichedLogs = logsData?.map(log => ({
         ...log,
-        user_email: userProfiles[log.performed_by]?.email || 
-                    userProfiles[log.performed_by]?.full_name || 
-                    'System'
+        user_email: userMap[log.performed_by]?.email || userMap[log.performed_by]?.full_name || 'System',
+        enriched_payload: {
+          ...log.payload,
+          company_name: log.payload?.company_id ? companyMap[log.payload.company_id]?.name : null,
+          transport_name: log.payload?.transport_company_id ? transportMap[log.payload.transport_company_id]?.name : null,
+          items_with_names: log.payload?.items?.map((item: any) => ({
+            ...item,
+            name: itemMap[item.item_id]?.name || 'Unknown Item',
+            sku: itemMap[item.item_id]?.sku
+          }))
+        }
       })) || []
 
-      setLogs(logsWithEmail)
+      setLogs(enrichedLogs)
     } catch (error: any) {
       console.error('Error fetching audit logs:', error?.message || error)
-      // Set empty logs on error so UI doesn't break
       setLogs([])
     } finally {
       setLoading(false)
@@ -117,75 +139,92 @@ export default function OrderLedger({ isOpen, onClose }: OrderLedgerProps) {
     }
   }
 
-  const formatPayload = (payload: any) => {
-    if (!payload) return null
+  const formatPayload = (enrichedPayload: any) => {
+    if (!enrichedPayload) return null
     
     const items = []
     
-    if (payload.company_id) items.push('Company updated')
-    if (payload.transport_company_id) items.push('Transport updated')
-    if (payload.status) items.push(`Status: ${payload.status}`)
-    if (payload.notes) items.push('Notes updated')
-    if (payload.items) items.push(`${payload.items.length} items`)
-    if (payload.items_count) items.push(`${payload.items_count} items`)
+    if (enrichedPayload.company_name) items.push(`Company: ${enrichedPayload.company_name}`)
+    if (enrichedPayload.transport_name) items.push(`Transport: ${enrichedPayload.transport_name}`)
+    if (enrichedPayload.status) items.push(`Status: ${enrichedPayload.status}`)
+    if (enrichedPayload.notes) items.push('Notes updated')
+    if (enrichedPayload.items) items.push(`${enrichedPayload.items.length} items`)
+    if (enrichedPayload.items_count) items.push(`${enrichedPayload.items_count} items deleted`)
     
     return items.length > 0 ? items.join(', ') : 'Order modified'
   }
 
-  const renderDetailedPayload = (payload: any, eventType: string) => {
-    if (!payload) return <p className="text-xs text-gray-500 dark:text-gray-400">No details available</p>
+  const renderDetailedPayload = (enrichedPayload: any, eventType: string) => {
+    if (!enrichedPayload) return <p className="text-xs text-gray-500 dark:text-gray-400">No details available</p>
 
     return (
       <div className="space-y-2 text-xs">
-        {payload.company_id && (
+        {enrichedPayload.company_name && (
           <div className="flex items-start space-x-2">
             <span className="text-gray-500 dark:text-gray-400 min-w-[80px]">Company:</span>
-            <span className="text-gray-900 dark:text-white font-medium">{payload.company_id}</span>
+            <span className="text-gray-900 dark:text-white font-medium">{enrichedPayload.company_name}</span>
           </div>
         )}
         
-        {payload.transport_company_id && (
+        {enrichedPayload.transport_name && (
           <div className="flex items-start space-x-2">
             <span className="text-gray-500 dark:text-gray-400 min-w-[80px]">Transport:</span>
-            <span className="text-gray-900 dark:text-white font-medium">{payload.transport_company_id}</span>
+            <span className="text-gray-900 dark:text-white font-medium">{enrichedPayload.transport_name}</span>
           </div>
         )}
         
-        {payload.status && (
+        {enrichedPayload.status && (
           <div className="flex items-start space-x-2">
             <span className="text-gray-500 dark:text-gray-400 min-w-[80px]">Status:</span>
-            <span className="text-gray-900 dark:text-white font-medium capitalize">{payload.status}</span>
+            <span className="text-gray-900 dark:text-white font-medium capitalize">{enrichedPayload.status}</span>
           </div>
         )}
         
-        {payload.notes && (
+        {enrichedPayload.notes && (
           <div className="flex items-start space-x-2">
             <span className="text-gray-500 dark:text-gray-400 min-w-[80px]">Notes:</span>
-            <span className="text-gray-900 dark:text-white">{payload.notes}</span>
+            <span className="text-gray-900 dark:text-white">{enrichedPayload.notes}</span>
           </div>
         )}
         
-        {payload.items && payload.items.length > 0 && (
+        {enrichedPayload.items_with_names && enrichedPayload.items_with_names.length > 0 && (
           <div className="space-y-1">
-            <span className="text-gray-500 dark:text-gray-400">Items ({payload.items.length}):</span>
+            <span className="text-gray-500 dark:text-gray-400">Items ({enrichedPayload.items_with_names.length}):</span>
             <div className="ml-4 space-y-1">
-              {payload.items.map((item: any, idx: number) => (
+              {enrichedPayload.items_with_names.map((item: any, idx: number) => (
                 <div key={idx} className="text-gray-900 dark:text-white">
-                  • Qty: {item.quantity}{item.price ? `, Price: ₹${item.price}` : ''}{item.due_date ? `, Due: ${item.due_date}` : ''}
+                  • <span className="font-medium">{item.name}</span> {item.sku && `(${item.sku})`}
+                  <br />
+                  <span className="ml-4 text-gray-600 dark:text-gray-400">
+                    Qty: {item.quantity}{item.price ? `, Price: ₹${item.price}` : ''}{item.due_date ? `, Due: ${new Date(item.due_date).toLocaleDateString()}` : ''}
+                  </span>
                 </div>
               ))}
             </div>
           </div>
         )}
         
-        {payload.items_count && (
-          <div className="flex items-start space-x-2">
-            <span className="text-gray-500 dark:text-gray-400 min-w-[80px]">Items:</span>
-            <span className="text-gray-900 dark:text-white font-medium">{payload.items_count} items deleted</span>
+        {enrichedPayload.delivery_update && enrichedPayload.items && (
+          <div className="space-y-1">
+            <span className="text-green-600 dark:text-green-400 font-medium">Delivery Recorded:</span>
+            <div className="ml-4 space-y-1">
+              {enrichedPayload.items.map((item: any, idx: number) => (
+                <div key={idx} className="text-gray-900 dark:text-white">
+                  • Delivered: {item.delivered_quantity} units
+                </div>
+              ))}
+            </div>
           </div>
         )}
         
-        {eventType === 'CREATE' && !payload.items && (
+        {enrichedPayload.items_count && (
+          <div className="flex items-start space-x-2">
+            <span className="text-gray-500 dark:text-gray-400 min-w-[80px]">Items:</span>
+            <span className="text-gray-900 dark:text-white font-medium">{enrichedPayload.items_count} items deleted</span>
+          </div>
+        )}
+        
+        {eventType === 'CREATE' && !enrichedPayload.items && (
           <div className="text-gray-500 dark:text-gray-400 italic">Order created</div>
         )}
         
@@ -278,11 +317,11 @@ export default function OrderLedger({ isOpen, onClose }: OrderLedgerProps) {
                         {/* Summary or Details */}
                         {isExpanded ? (
                           <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
-                            {renderDetailedPayload(log.payload, log.event_type)}
+                            {renderDetailedPayload(log.enriched_payload, log.event_type)}
                           </div>
                         ) : (
                           <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                            {formatPayload(log.payload)}
+                            {formatPayload(log.enriched_payload)}
                           </div>
                         )}
 
