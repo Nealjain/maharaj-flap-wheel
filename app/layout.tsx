@@ -5,6 +5,7 @@ import { AuthProvider } from '@/lib/auth'
 import { OptimizedDataProvider } from '@/lib/optimized-data-provider'
 import { ThemeProvider } from '@/lib/theme'
 import Toaster from '@/components/Toaster'
+import { Analytics } from '@vercel/analytics/next'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -30,6 +31,7 @@ export default function RootLayout({
             </OptimizedDataProvider>
           </AuthProvider>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   )
