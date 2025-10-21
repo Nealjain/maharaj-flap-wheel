@@ -26,21 +26,22 @@ export default function TopNav() {
 
   return (
     <div className="lg:hidden fixed top-0 right-0 left-0 z-40 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm">
-      <div className="flex items-center justify-between px-4 py-3">
-        {/* Left side - Logo/Title */}
-        <div className="flex items-center space-x-2">
-          <div className="h-8 w-8 bg-primary-600 rounded-lg flex items-center justify-center">
+      <div className="flex items-center justify-between pl-16 pr-4 py-3">
+        {/* Left side - Logo/Title (with space for menu button) */}
+        <div className="flex items-center space-x-2 flex-1 min-w-0">
+          <div className="h-8 w-8 bg-primary-600 rounded-lg flex items-center justify-center flex-shrink-0">
             <span className="text-white font-bold text-sm">M</span>
           </div>
-          <span className="text-lg font-bold text-gray-900 dark:text-white">Maharaj</span>
+          <span className="text-lg font-bold text-gray-900 dark:text-white truncate">Maharaj</span>
         </div>
 
         {/* Right side - Theme toggle and User menu */}
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1 flex-shrink-0">
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            aria-label="Toggle theme"
           >
             {theme === 'dark' ? (
               <SunIcon className="h-5 w-5" />
@@ -53,10 +54,11 @@ export default function TopNav() {
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center space-x-2 p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="flex items-center space-x-1 p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              aria-label="User menu"
             >
               <UserCircleIcon className="h-6 w-6" />
-              <ChevronDownIcon className="h-4 w-4" />
+              <ChevronDownIcon className="h-3 w-3" />
             </button>
 
             {/* Dropdown Menu */}
