@@ -23,6 +23,7 @@ interface AuditLog {
   payload: any
   created_at: string
   user_email?: string
+  enriched_payload?: any
 }
 
 interface OrderLedgerProps {
