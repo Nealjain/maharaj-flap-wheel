@@ -33,6 +33,7 @@ interface OrderLedgerProps {
 export default function OrderLedger({ isOpen, onClose }: OrderLedgerProps) {
   const [logs, setLogs] = useState<AuditLog[]>([])
   const [loading, setLoading] = useState(true)
+  const [expandedLog, setExpandedLog] = useState<string | null>(null)
 
   useEffect(() => {
     if (isOpen) {
@@ -43,26 +44,48 @@ export default function OrderLedger({ isOpen, onClose }: OrderLedgerProps) {
   const fetchLogs = async () => {
     setLoading(true)
     try {
-      const { data, error } = await supabase
+      // First, get audit logs
+      const { data: logsData, error: logsError } = await supabase
         .from('audit_logs')
-        .select(`
-          *,
-          user:performed_by(email)
-        `)
+        .select('*')
         .eq('entity', 'orders')
         .order('created_at', { ascending: false })
         .limit(100)
 
-      if (error) throw error
+      if (logsError) {
+        console.error('Error fetching logs:', logsError)
+        throw logsError
+      }
 
-      const logsWithEmail = data?.map(log => ({
+      // Then, get user profiles for the performed_by IDs
+      const userIds = Array.from(new Set(logsData?.map(log => log.performed_by).filter(Boolean)))
+      
+      let userProfiles: any = {}
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('user_profiles')
+          .select('id, email, full_name')
+          .in('id', userIds)
+
+        userProfiles = profiles?.reduce((acc: any, profile: any) => {
+          acc[profile.id] = profile
+          return acc
+        }, {}) || {}
+      }
+
+      // Combine logs with user info
+      const logsWithEmail = logsData?.map(log => ({
         ...log,
-        user_email: log.user?.email || 'System'
+        user_email: userProfiles[log.performed_by]?.email || 
+                    userProfiles[log.performed_by]?.full_name || 
+                    'System'
       })) || []
 
       setLogs(logsWithEmail)
-    } catch (error) {
-      console.error('Error fetching audit logs:', error)
+    } catch (error: any) {
+      console.error('Error fetching audit logs:', error?.message || error)
+      // Set empty logs on error so UI doesn't break
+      setLogs([])
     } finally {
       setLoading(false)
     }
@@ -107,6 +130,70 @@ export default function OrderLedger({ isOpen, onClose }: OrderLedgerProps) {
     if (payload.items_count) items.push(`${payload.items_count} items`)
     
     return items.length > 0 ? items.join(', ') : 'Order modified'
+  }
+
+  const renderDetailedPayload = (payload: any, eventType: string) => {
+    if (!payload) return <p className="text-xs text-gray-500 dark:text-gray-400">No details available</p>
+
+    return (
+      <div className="space-y-2 text-xs">
+        {payload.company_id && (
+          <div className="flex items-start space-x-2">
+            <span className="text-gray-500 dark:text-gray-400 min-w-[80px]">Company:</span>
+            <span className="text-gray-900 dark:text-white font-medium">{payload.company_id}</span>
+          </div>
+        )}
+        
+        {payload.transport_company_id && (
+          <div className="flex items-start space-x-2">
+            <span className="text-gray-500 dark:text-gray-400 min-w-[80px]">Transport:</span>
+            <span className="text-gray-900 dark:text-white font-medium">{payload.transport_company_id}</span>
+          </div>
+        )}
+        
+        {payload.status && (
+          <div className="flex items-start space-x-2">
+            <span className="text-gray-500 dark:text-gray-400 min-w-[80px]">Status:</span>
+            <span className="text-gray-900 dark:text-white font-medium capitalize">{payload.status}</span>
+          </div>
+        )}
+        
+        {payload.notes && (
+          <div className="flex items-start space-x-2">
+            <span className="text-gray-500 dark:text-gray-400 min-w-[80px]">Notes:</span>
+            <span className="text-gray-900 dark:text-white">{payload.notes}</span>
+          </div>
+        )}
+        
+        {payload.items && payload.items.length > 0 && (
+          <div className="space-y-1">
+            <span className="text-gray-500 dark:text-gray-400">Items ({payload.items.length}):</span>
+            <div className="ml-4 space-y-1">
+              {payload.items.map((item: any, idx: number) => (
+                <div key={idx} className="text-gray-900 dark:text-white">
+                  • Qty: {item.quantity}{item.price ? `, Price: ₹${item.price}` : ''}{item.due_date ? `, Due: ${item.due_date}` : ''}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {payload.items_count && (
+          <div className="flex items-start space-x-2">
+            <span className="text-gray-500 dark:text-gray-400 min-w-[80px]">Items:</span>
+            <span className="text-gray-900 dark:text-white font-medium">{payload.items_count} items deleted</span>
+          </div>
+        )}
+        
+        {eventType === 'CREATE' && !payload.items && (
+          <div className="text-gray-500 dark:text-gray-400 italic">Order created</div>
+        )}
+        
+        {eventType === 'DELETE' && (
+          <div className="text-red-600 dark:text-red-400 italic">Order deleted</div>
+        )}
+      </div>
+    )
   }
 
   return (
@@ -159,44 +246,59 @@ export default function OrderLedger({ isOpen, onClose }: OrderLedgerProps) {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {logs.map((log, index) => (
-                    <motion.div
-                      key={log.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600"
-                    >
-                      {/* Event Header */}
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center space-x-2">
-                          {getEventIcon(log.event_type)}
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${getEventColor(log.event_type)}`}>
-                            {log.event_type}
+                  {logs.map((log, index) => {
+                    const isExpanded = expandedLog === log.id
+                    return (
+                      <motion.div
+                        key={log.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600 cursor-pointer hover:border-primary-500 dark:hover:border-primary-500 transition-colors"
+                        onClick={() => setExpandedLog(isExpanded ? null : log.id)}
+                      >
+                        {/* Event Header */}
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-center space-x-2">
+                            {getEventIcon(log.event_type)}
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${getEventColor(log.event_type)}`}>
+                              {log.event_type}
+                            </span>
+                          </div>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {formatDateTime(log.created_at)}
                           </span>
                         </div>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {formatDateTime(log.created_at)}
-                        </span>
-                      </div>
 
-                      {/* Order ID */}
-                      <div className="text-sm font-medium text-gray-900 dark:text-white mb-1">
-                        Order #{log.entity_id?.substring(0, 8)}...
-                      </div>
+                        {/* Order ID */}
+                        <div className="text-sm font-medium text-gray-900 dark:text-white mb-1">
+                          Order #{log.entity_id?.substring(0, 8)}...
+                        </div>
 
-                      {/* Details */}
-                      <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                        {formatPayload(log.payload)}
-                      </div>
+                        {/* Summary or Details */}
+                        {isExpanded ? (
+                          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
+                            {renderDetailedPayload(log.payload, log.event_type)}
+                          </div>
+                        ) : (
+                          <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                            {formatPayload(log.payload)}
+                          </div>
+                        )}
 
-                      {/* User */}
-                      <div className="flex items-center space-x-1 text-xs text-gray-500 dark:text-gray-400">
-                        <UserIcon className="h-3 w-3" />
-                        <span>{log.user_email}</span>
-                      </div>
-                    </motion.div>
-                  ))}
+                        {/* User */}
+                        <div className="flex items-center justify-between mt-2">
+                          <div className="flex items-center space-x-1 text-xs text-gray-500 dark:text-gray-400">
+                            <UserIcon className="h-3 w-3" />
+                            <span>{log.user_email}</span>
+                          </div>
+                          <span className="text-xs text-primary-600 dark:text-primary-400">
+                            {isExpanded ? 'Click to collapse' : 'Click for details'}
+                          </span>
+                        </div>
+                      </motion.div>
+                    )
+                  })}
                 </div>
               )}
             </div>

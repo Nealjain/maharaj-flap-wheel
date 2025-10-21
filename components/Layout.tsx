@@ -45,10 +45,10 @@ export default function Layout({ children, requireAuth = true, requireAdmin = fa
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Sidebar />
       <TopNav />
-      <main className="flex-1 w-full lg:ml-0">
+      <main className="lg:ml-64 min-h-screen">
         <div className="p-4 sm:p-6 lg:p-8 pt-20 lg:pt-4 pb-4">
           <PageTransition>
             {children}

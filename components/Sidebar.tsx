@@ -83,7 +83,7 @@ export default function Sidebar() {
         )}
       </AnimatePresence>
 
-      {/* Sidebar */}
+      {/* Mobile Sidebar */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -91,7 +91,7 @@ export default function Sidebar() {
             animate={{ x: 0 }}
             exit={{ x: -300 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-xl border-r border-gray-200 dark:border-gray-700 lg:translate-x-0 lg:static lg:inset-0"
+            className="lg:hidden fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-800 shadow-xl border-r border-gray-200 dark:border-gray-700"
           >
             <div className="flex flex-col h-full">
               {/* Header */}
@@ -249,7 +249,7 @@ export default function Sidebar() {
       </AnimatePresence>
 
       {/* Desktop sidebar - always visible on large screens */}
-      <div className="hidden lg:flex lg:flex-col lg:w-64 lg:bg-white lg:dark:bg-gray-800 lg:shadow-xl lg:border-r lg:border-gray-200 lg:dark:border-gray-700">
+      <div className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:w-64 lg:bg-white lg:dark:bg-gray-800 lg:shadow-xl lg:border-r lg:border-gray-200 lg:dark:border-gray-700 lg:z-30">
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
