@@ -366,7 +366,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
       >
         <div className="flex items-center space-x-4">
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push('/orders')}
             className="p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <ArrowLeftIcon className="h-5 w-5" />
@@ -596,7 +596,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
           <div className="flex justify-end space-x-3">
             <button
               type="button"
-              onClick={() => router.back()}
+              onClick={() => router.push('/orders')}
               className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
             >
               Cancel

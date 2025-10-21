@@ -301,7 +301,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center space-x-3 sm:space-x-4">
             <button
-              onClick={() => router.back()}
+              onClick={() => router.push('/orders')}
               className="p-2 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex-shrink-0"
             >
               <ArrowLeftIcon className="h-5 w-5" />
