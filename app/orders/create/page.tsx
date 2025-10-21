@@ -477,16 +477,23 @@ export default function CreateOrderPage() {
                       <input
                         type="number"
                         min="1"
+<<<<<<< HEAD
+=======
+                        max={orderItem.available_stock}
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
                         value={orderItem.quantity === 0 ? '' : orderItem.quantity}
                         onChange={(e) => handleUpdateItemQuantity(orderItem.item_id, parseInt(e.target.value) || 0)}
                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-white"
                         placeholder="Enter quantity"
                       />
+<<<<<<< HEAD
                       {orderItem.quantity > orderItem.available_stock && (
                         <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
                           ⚠️ Exceeds available stock by {orderItem.quantity - orderItem.available_stock}
                         </p>
                       )}
+=======
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
                     </div>
                     
                     <div>

@@ -25,6 +25,7 @@ export default function LoginPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+<<<<<<< HEAD
     // Check if user just signed out
     const signedOut = typeof window !== 'undefined' && localStorage.getItem('signed_out')
     if (signedOut) {
@@ -38,6 +39,10 @@ export default function LoginPage() {
       console.log('User authenticated, redirecting to dashboard...', user.email)
       // Use replace instead of push to prevent back button issues
       router.replace('/dashboard')
+=======
+    if (user && !loading) {
+      router.push('/dashboard')
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
     }
   }, [user, loading, router])
 
@@ -47,6 +52,7 @@ export default function LoginPage() {
     setError('')
 
     try {
+<<<<<<< HEAD
       console.log('Attempting login for:', formData.email)
       const { error } = await signIn(formData.email, formData.password)
       
@@ -62,6 +68,21 @@ export default function LoginPage() {
     } catch (error) {
       console.error('Login exception:', error)
       setError('An error occurred. Please try again.')
+=======
+      const { error } = await signIn(formData.email, formData.password)
+      
+      if (error) {
+        setError('Invalid email or password')
+      } else {
+        // Wait for auth state to update before redirecting
+        setTimeout(() => {
+          router.push('/dashboard')
+        }, 100)
+      }
+    } catch (error) {
+      setError('An error occurred. Please try again.')
+    } finally {
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
       setIsSubmitting(false)
     }
   }

@@ -19,7 +19,10 @@ interface SelectedItem {
   item_id: string
   quantity: number
   price: number
+<<<<<<< HEAD
   due_date?: string
+=======
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
   name: string
   sku: string
   unit: string
@@ -81,7 +84,10 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
             item_id: oi.item_id,
             quantity: oi.quantity,
             price: oi.price,
+<<<<<<< HEAD
             due_date: oi.due_date || '',
+=======
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
             name: oi.item?.name || 'Unknown',
             sku: oi.item?.sku || 'N/A',
             unit: oi.item?.unit || 'pcs',
@@ -138,7 +144,10 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
           item_id: item.id,
           quantity: 1,
           price: 0,
+<<<<<<< HEAD
           due_date: '',
+=======
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
           name: item.name,
           sku: item.sku,
           unit: item.unit,
@@ -166,6 +175,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
     )
   }
 
+<<<<<<< HEAD
   const handleUpdateItemDueDate = (itemId: string, dueDate: string) => {
     setOrderItems(prev =>
       prev.map(item =>
@@ -174,6 +184,8 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
     )
   }
 
+=======
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
   const handleRemoveItem = (itemId: string) => {
     setOrderItems(prev => prev.filter(item => item.item_id !== itemId))
   }
@@ -248,7 +260,10 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
         item_id: oi.item_id,
         quantity: oi.quantity,
         price: oi.price,
+<<<<<<< HEAD
         due_date: oi.due_date || null,
+=======
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
         delivered_quantity: deliveredMap.get(oi.item_id) || 0 // PRESERVE delivered_quantity!
       }))
 
@@ -446,6 +461,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
             {/* Selected Items */}
             <div className="space-y-4">
               {orderItems.map((orderItem) => (
+<<<<<<< HEAD
                 <div key={orderItem.item_id} className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex-1">
@@ -508,6 +524,50 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
                       ₹{(orderItem.quantity * orderItem.price).toFixed(2)}
                     </span>
                   </div>
+=======
+                <div key={orderItem.item_id} className="flex items-center space-x-4 bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                  <div className="flex-1">
+                    <h4 className="font-medium text-gray-900 dark:text-white">{orderItem.name}</h4>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">SKU: {orderItem.sku} | Available: {orderItem.available_stock} {orderItem.unit}</p>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <label className="text-sm text-gray-700 dark:text-gray-300">Qty:</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max={orderItem.available_stock}
+                      value={orderItem.quantity || ''}
+                      onChange={(e) => handleUpdateItemQuantity(orderItem.item_id, parseInt(e.target.value) || 1)}
+                      className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-white"
+                    />
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <label className="text-sm text-gray-700 dark:text-gray-300">Price:</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={orderItem.price || ''}
+                      onChange={(e) => handleUpdateItemPrice(orderItem.item_id, parseFloat(e.target.value) || 0)}
+                      className="w-24 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-white"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  
+                  <div className="text-sm font-medium text-gray-900 dark:text-white">
+                    ₹{(orderItem.quantity * orderItem.price).toFixed(2)}
+                  </div>
+                  
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveItem(orderItem.item_id)}
+                    className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200"
+                  >
+                    <TrashIcon className="h-5 w-5" />
+                  </button>
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
                 </div>
               ))}
             </div>

@@ -26,11 +26,17 @@ export default function EditItemPage({ params }: EditItemPageProps) {
     name: '',
     description: '',
     unit: 'pcs',
+<<<<<<< HEAD
     custom_unit: '',
     physical_stock: 0,
     reserved_stock: 0
   })
   const [useCustomUnit, setUseCustomUnit] = useState(false)
+=======
+    physical_stock: 0,
+    reserved_stock: 0
+  })
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
 
   useEffect(() => {
     params.then(({ id }) => setItemId(id))
@@ -41,14 +47,20 @@ export default function EditItemPage({ params }: EditItemPageProps) {
       const foundItem = items.find(i => i.id === itemId)
       if (foundItem) {
         setItem(foundItem)
+<<<<<<< HEAD
         const hasCustomUnit = !!(foundItem.custom_unit && foundItem.custom_unit.trim() !== '')
         setUseCustomUnit(hasCustomUnit)
+=======
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
         setFormData({
           sku: foundItem.sku,
           name: foundItem.name,
           description: foundItem.description || '',
           unit: foundItem.unit,
+<<<<<<< HEAD
           custom_unit: foundItem.custom_unit || '',
+=======
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
           physical_stock: foundItem.physical_stock,
           reserved_stock: foundItem.reserved_stock
         })
@@ -125,6 +137,7 @@ export default function EditItemPage({ params }: EditItemPageProps) {
             </h2>
             
             <div className="space-y-4">
+<<<<<<< HEAD
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   SKU *
@@ -191,6 +204,45 @@ export default function EditItemPage({ params }: EditItemPageProps) {
                       <option value="pair">Pair</option>
                     </select>
                   )}
+=======
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    SKU *
+                  </label>
+                  <input
+                    type="text"
+                    name="sku"
+                    required
+                    value={formData.sku}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
+                    placeholder="Enter SKU"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Unit
+                  </label>
+                  <select
+                    name="unit"
+                    value={formData.unit}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
+                  >
+                    <option value="pcs">Pieces</option>
+                    <option value="kg">Kilograms</option>
+                    <option value="g">Grams</option>
+                    <option value="m">Meters</option>
+                    <option value="cm">Centimeters</option>
+                    <option value="l">Liters</option>
+                    <option value="ml">Milliliters</option>
+                    <option value="box">Box</option>
+                    <option value="set">Set</option>
+                    <option value="pair">Pair</option>
+                  </select>
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
                 </div>
               </div>
 

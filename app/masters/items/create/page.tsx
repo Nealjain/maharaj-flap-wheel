@@ -20,11 +20,17 @@ export default function CreateItemPage() {
     name: '',
     description: '',
     unit: 'pcs',
+<<<<<<< HEAD
     custom_unit: '',
     physical_stock: 0,
     reserved_stock: 0
   })
   const [useCustomUnit, setUseCustomUnit] = useState(false)
+=======
+    physical_stock: 0,
+    reserved_stock: 0
+  })
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
 
   // Generate unique SKU
   const generateSKU = () => {
@@ -145,6 +151,7 @@ export default function CreateItemPage() {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Unit
                 </label>
+<<<<<<< HEAD
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <input
@@ -193,6 +200,25 @@ export default function CreateItemPage() {
                     </select>
                   )}
                 </div>
+=======
+                <select
+                  name="unit"
+                  value={formData.unit}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
+                >
+                  <option value="pcs">Pieces</option>
+                  <option value="kg">Kilograms</option>
+                  <option value="g">Grams</option>
+                  <option value="m">Meters</option>
+                  <option value="cm">Centimeters</option>
+                  <option value="l">Liters</option>
+                  <option value="ml">Milliliters</option>
+                  <option value="box">Box</option>
+                  <option value="set">Set</option>
+                  <option value="pair">Pair</option>
+                </select>
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
               </div>
 
               <div>

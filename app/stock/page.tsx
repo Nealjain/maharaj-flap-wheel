@@ -6,7 +6,10 @@ import { motion } from 'framer-motion'
 import Layout from '@/components/Layout'
 import { useData } from '@/lib/optimized-data-provider'
 import CSVExport from '@/components/CSVExport'
+<<<<<<< HEAD
 import { supabase } from '@/lib/supabase'
+=======
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
 import {
   PlusIcon,
   MagnifyingGlassIcon,
@@ -18,8 +21,12 @@ import {
   ArrowUpIcon,
   ArrowDownIcon,
   ChevronLeftIcon,
+<<<<<<< HEAD
   ChevronRightIcon,
   TrashIcon
+=======
+  ChevronRightIcon
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
 } from '@heroicons/react/24/outline'
 
 export default function StockPage() {
@@ -34,9 +41,12 @@ export default function StockPage() {
     physical_stock: 0,
     reserved_stock: 0
   })
+<<<<<<< HEAD
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deletingItem, setDeletingItem] = useState<any>(null)
   const [deleteQuantity, setDeleteQuantity] = useState(0)
+=======
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
 
   // Memoized filtering logic
   const filteredItems = useMemo(() => {
@@ -157,6 +167,7 @@ export default function StockPage() {
     setEditForm({ physical_stock: 0, reserved_stock: 0 })
   }
 
+<<<<<<< HEAD
   const handleDeleteStock = (item: any) => {
     setDeletingItem(item)
     setDeleteQuantity(0)
@@ -222,6 +233,8 @@ export default function StockPage() {
     }
   }
 
+=======
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
   const exportData = filteredItems.map(item => ({
     sku: item.sku,
     name: item.name,
@@ -262,6 +275,7 @@ export default function StockPage() {
               Monitor and manage your inventory levels
             </p>
           </div>
+<<<<<<< HEAD
           <div className="mt-4 sm:mt-0 flex gap-2">
             <button
               onClick={() => router.push('/stock/ledger')}
@@ -269,6 +283,9 @@ export default function StockPage() {
             >
               View Ledger
             </button>
+=======
+          <div className="mt-4 sm:mt-0">
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
             <button
               onClick={() => router.push('/masters/items/create')}
               className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
@@ -405,7 +422,11 @@ export default function StockPage() {
                                 </div>
                               </div>
                               <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+<<<<<<< HEAD
                                 Unit: {item.custom_unit || item.unit}
+=======
+                                Unit: {item.unit}
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
                               </div>
                             </div>
                           </td>
@@ -437,19 +458,26 @@ export default function StockPage() {
                                 <button
                                   onClick={() => handleSaveStock(item.id)}
                                   className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
+<<<<<<< HEAD
                                   title="Save"
+=======
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
                                 >
                                   <CheckCircleIcon className="h-4 w-4" />
                                 </button>
                                 <button
                                   onClick={handleCancelEdit}
                                   className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+<<<<<<< HEAD
                                   title="Cancel"
+=======
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
                                 >
                                   <XCircleIcon className="h-4 w-4" />
                                 </button>
                               </div>
                             ) : (
+<<<<<<< HEAD
                               <div className="flex items-center space-x-2">
                                 <button
                                   onClick={() => handleEditStock(item)}
@@ -473,6 +501,14 @@ export default function StockPage() {
                                   <TrashIcon className="h-4 w-4" />
                                 </button>
                               </div>
+=======
+                              <button
+                                onClick={() => handleEditStock(item)}
+                                className="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300"
+                              >
+                                <PencilIcon className="h-4 w-4" />
+                              </button>
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
                             )}
                           </td>
                         </motion.tr>
@@ -560,6 +596,7 @@ export default function StockPage() {
           )}
         </div>
       </div>
+<<<<<<< HEAD
 
       {/* Delete Stock Modal */}
       {showDeleteModal && deletingItem && (
@@ -653,6 +690,8 @@ export default function StockPage() {
           </div>
         </div>
       )}
+=======
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
     </Layout>
   )
 }

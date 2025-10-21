@@ -21,6 +21,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+<<<<<<< HEAD
   const [isSignedOut, setIsSignedOut] = useState(false)
 
   useEffect(() => {
@@ -32,11 +33,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.warn('Auth loading timeout - forcing completion')
         setLoading(false)
       }
+=======
+
+  useEffect(() => {
+    // Add timeout to prevent infinite loading
+    const loadingTimeout = setTimeout(() => {
+      console.warn('Auth loading timeout - forcing completion')
+      setLoading(false)
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
     }, 5000) // 5 second timeout
 
     // Get initial session
     supabase.auth.getSession().then(({ data: { session }, error }) => {
+<<<<<<< HEAD
       if (!mounted) return
+=======
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
       clearTimeout(loadingTimeout)
       
       if (error) {
@@ -49,7 +61,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return
       }
       
+<<<<<<< HEAD
       console.log('Initial session:', session ? 'Found' : 'None')
+=======
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
       setSession(session)
       setUser(session?.user ?? null)
       if (session?.user) {
@@ -58,7 +73,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false)
       }
     }).catch((error) => {
+<<<<<<< HEAD
       if (!mounted) return
+=======
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
       clearTimeout(loadingTimeout)
       console.error('Failed to get session:', error)
       setSession(null)
@@ -67,15 +85,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false)
     })
     
+<<<<<<< HEAD
     return () => {
       mounted = false
       clearTimeout(loadingTimeout)
     }
+=======
+    return () => clearTimeout(loadingTimeout)
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
 
     // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+<<<<<<< HEAD
       console.log('Auth state changed:', event, session?.user?.email || 'no user')
       
       // Update state immediately for all events
@@ -113,6 +136,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setProfile(null)
           setLoading(false)
         }
+=======
+      console.log('Auth state changed:', event)
+      
+      // Handle token refresh errors
+      if (event === 'TOKEN_REFRESHED') {
+        console.log('Token refreshed successfully')
+      } else if (event === 'SIGNED_OUT') {
+        console.log('User signed out')
+        setSession(null)
+        setUser(null)
+        setProfile(null)
+        setLoading(false)
+        return
+      }
+      
+      setSession(session)
+      setUser(session?.user ?? null)
+      
+      if (session?.user) {
+        await fetchUserProfile(session.user.id)
+      } else {
+        setProfile(null)
+        setLoading(false)
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
       }
     })
 
@@ -121,8 +168,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUserProfile = async (userId: string) => {
     try {
+<<<<<<< HEAD
       console.log('Fetching profile for user:', userId)
       
+=======
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
       // Add timeout for profile fetch
       const profilePromise = supabase
         .from('user_profiles')
@@ -138,6 +188,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error('Error fetching user profile:', error)
+<<<<<<< HEAD
         console.log('Profile error details:', {
           message: error.message,
           code: error.code,
@@ -146,24 +197,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setProfile(null)
       } else {
         console.log('Profile fetched successfully:', data)
+=======
+        setProfile(null)
+      } else {
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
         setProfile(data)
       }
     } catch (error) {
       console.error('Error fetching user profile:', error)
       setProfile(null)
     } finally {
+<<<<<<< HEAD
       console.log('Setting loading to false')
+=======
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
       setLoading(false)
     }
   }
 
   const signIn = async (email: string, password: string) => {
+<<<<<<< HEAD
     console.log('SignIn: Starting login process for', email)
+=======
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
     
+<<<<<<< HEAD
     if (error) {
       console.error('SignIn: Login failed:', error)
       return { error }
@@ -193,13 +255,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (logError) {
         console.error('SignIn: Error in post-login process:', logError)
       }
+=======
+    // Log login activity
+    if (data?.user) {
+      try {
+        await supabase.from('login_activities').insert({
+          user_id: data.user.id,
+          success: true,
+          ip: null, // Will be set by server if needed
+          user_agent: typeof window !== 'undefined' ? window.navigator.userAgent : null
+        })
+      } catch (logError) {
+        console.error('Error logging login activity:', logError)
+      }
+    } else if (error) {
+      // Log failed login attempt (if we have user info)
+      console.error('Login failed:', error)
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
     }
     
     return { error }
   }
 
   const signOut = async () => {
+<<<<<<< HEAD
     console.log('SignOut: Starting logout process')
+=======
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
     setLoading(true)
     try {
       // Log logout activity before signing out
@@ -217,10 +299,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
       
+<<<<<<< HEAD
       console.log('SignOut: Calling Supabase signOut')
       await supabase.auth.signOut()
       
       console.log('SignOut: Clearing state and storage')
+=======
+      await supabase.auth.signOut()
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
       setUser(null)
       setProfile(null)
       setSession(null)
@@ -229,6 +315,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (typeof window !== 'undefined') {
         localStorage.clear()
         sessionStorage.clear()
+<<<<<<< HEAD
         
         // Prevent back button by replacing history
         window.history.pushState(null, '', '/login')
@@ -238,6 +325,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setTimeout(() => {
           window.location.href = '/login'
         }, 100)
+=======
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
       }
     } catch (error) {
       console.error('Error signing out:', error)
@@ -248,7 +337,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (typeof window !== 'undefined') {
         localStorage.clear()
         sessionStorage.clear()
+<<<<<<< HEAD
         window.location.href = '/login'
+=======
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
       }
     } finally {
       setLoading(false)

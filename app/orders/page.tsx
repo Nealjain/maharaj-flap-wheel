@@ -80,6 +80,7 @@ export default function OrdersPage() {
     return order.order_items.reduce((total, item) => total + item.quantity, 0)
   }
 
+<<<<<<< HEAD
   const getEarliestDueDate = (order: Order) => {
     if (!order.order_items) return null
     const dueDates = order.order_items
@@ -89,6 +90,8 @@ export default function OrdersPage() {
     return dueDates.sort()[0]
   }
 
+=======
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
   const exportHeaders = [
     'Order ID',
     'Company Name',
@@ -229,6 +232,7 @@ export default function OrdersPage() {
                               <span className="ml-1">{order.status === 'reserved' ? 'Pending' : order.status}</span>
                             </span>
                           </div>
+<<<<<<< HEAD
                           <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
                             <span>
                               Created: {new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -243,6 +247,11 @@ export default function OrdersPage() {
                               ) : null
                             })()}
                           </div>
+=======
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {new Date(order.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </p>
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
                         </div>
                         <EyeIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
                       </div>
@@ -277,6 +286,7 @@ export default function OrdersPage() {
                                   <p className="font-medium text-gray-900 dark:text-white truncate">
                                     {item.item?.name || 'Unknown Item'}
                                   </p>
+<<<<<<< HEAD
                                   <div className="flex items-center flex-wrap gap-2 mt-0.5">
                                     <span className="text-xs text-gray-500 dark:text-gray-400">
                                       Qty: {item.quantity}
@@ -287,6 +297,12 @@ export default function OrdersPage() {
                                         Due: {new Date(item.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                       </span>
                                     )}
+=======
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                                      Qty: {item.quantity}
+                                    </span>
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
                                     {remaining > 0 && (
                                       <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
                                         {remaining} pending

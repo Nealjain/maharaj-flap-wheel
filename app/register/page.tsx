@@ -9,9 +9,13 @@ import {
   EyeSlashIcon,
   SunIcon,
   MoonIcon,
+<<<<<<< HEAD
   UserPlusIcon,
   CheckCircleIcon,
   XCircleIcon
+=======
+  UserPlusIcon
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
 } from '@heroicons/react/24/outline'
 import { useTheme } from '@/lib/theme'
 
@@ -28,8 +32,11 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
+<<<<<<< HEAD
   const [emailCheckLoading, setEmailCheckLoading] = useState(false)
   const [emailExists, setEmailExists] = useState(false)
+=======
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -48,6 +55,7 @@ export default function RegisterPage() {
     setIsSubmitting(true)
 
     try {
+<<<<<<< HEAD
       // Check if email already exists
       console.log('Checking if email exists:', formData.email)
       const { data: existingUsers, error: checkError } = await supabase
@@ -67,6 +75,9 @@ export default function RegisterPage() {
 
       // Sign up with Supabase Auth
       console.log('Creating new account for:', formData.email)
+=======
+      // Sign up with Supabase Auth
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -78,6 +89,7 @@ export default function RegisterPage() {
       })
 
       if (error) {
+<<<<<<< HEAD
         console.error('Signup error:', error)
         // Check for specific duplicate email error
         if (error.message.includes('already registered') || error.message.includes('already exists')) {
@@ -85,6 +97,9 @@ export default function RegisterPage() {
         } else {
           setError(error.message)
         }
+=======
+        setError(error.message)
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
       } else if (data.user) {
         // Wait a moment for the database trigger to create the profile
         await new Promise(resolve => setTimeout(resolve, 1000))
@@ -130,6 +145,7 @@ export default function RegisterPage() {
       ...prev,
       [name]: value
     }))
+<<<<<<< HEAD
 
     // Check email availability when email field changes
     if (name === 'email' && value.includes('@')) {
@@ -158,6 +174,8 @@ export default function RegisterPage() {
     } finally {
       setEmailCheckLoading(false)
     }
+=======
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
   }
 
   return (
@@ -233,7 +251,11 @@ export default function RegisterPage() {
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Email address
               </label>
+<<<<<<< HEAD
               <div className="mt-1 relative">
+=======
+              <div className="mt-1">
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
                 <input
                   id="email"
                   name="email"
@@ -242,6 +264,7 @@ export default function RegisterPage() {
                   required
                   value={formData.email}
                   onChange={handleInputChange}
+<<<<<<< HEAD
                   className={`appearance-none block w-full px-3 py-2 pr-10 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white sm:text-sm ${
                     emailExists 
                       ? 'border-red-300 dark:border-red-600' 
@@ -278,6 +301,12 @@ export default function RegisterPage() {
                   .
                 </p>
               )}
+=======
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white sm:text-sm"
+                  placeholder="Enter your email"
+                />
+              </div>
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
             </div>
 
 
@@ -344,7 +373,11 @@ export default function RegisterPage() {
             <div>
               <button
                 type="submit"
+<<<<<<< HEAD
                 disabled={isSubmitting || emailExists || emailCheckLoading}
+=======
+                disabled={isSubmitting}
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
@@ -352,11 +385,14 @@ export default function RegisterPage() {
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                     Creating Account...
                   </>
+<<<<<<< HEAD
                 ) : emailExists ? (
                   <>
                     <XCircleIcon className="h-4 w-4 mr-2" />
                     Email Already Exists
                   </>
+=======
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
                 ) : (
                   <>
                     <UserPlusIcon className="h-4 w-4 mr-2" />

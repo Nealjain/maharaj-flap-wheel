@@ -226,7 +226,11 @@ export default function ItemsPage() {
                             </div>
                           </div>
                           <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+<<<<<<< HEAD
                             Unit: {item.custom_unit || item.unit}
+=======
+                            Unit: {item.unit}
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
                           </div>
                         </div>
                       </td>

@@ -53,7 +53,10 @@ export interface Item {
   name: string
   description?: string
   unit: string
+<<<<<<< HEAD
   custom_unit?: string
+=======
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
   physical_stock: number
   reserved_stock: number
   created_at: string
@@ -67,7 +70,10 @@ export interface Order {
   created_by: string
   status: 'reserved' | 'completed' | 'cancelled'
   notes?: string
+<<<<<<< HEAD
   due_date?: string
+=======
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
   created_at: string
   updated_at: string
   company?: Company
@@ -81,7 +87,10 @@ export interface OrderItem {
   quantity: number
   price: number
   delivered_quantity?: number
+<<<<<<< HEAD
   due_date?: string
+=======
+>>>>>>> 763112d2288745be4accd7d405920f14a82fb60d
   item?: Item
 }
 
