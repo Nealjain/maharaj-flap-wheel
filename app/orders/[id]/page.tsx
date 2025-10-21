@@ -30,7 +30,7 @@ interface OrderDetailPageProps {
 export default function OrderDetailPage({ params }: OrderDetailPageProps) {
   const router = useRouter()
   const { orders, updateOrder, refetch } = useData()
-  const { isAdmin } = useAuth()
+  const { isAdmin, user } = useAuth()
   const [loading, setLoading] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [order, setOrder] = useState<any>(null)
@@ -157,6 +157,21 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
         }))
       }))
 
+      // Log audit event for delivery
+      await supabase.from('audit_logs').insert([{
+        event_type: 'UPDATE',
+        entity: 'orders',
+        entity_id: order.id,
+        performed_by: user?.id,
+        payload: {
+          delivery_update: true,
+          items: Object.entries(partialDeliveries).map(([item_id, delivered_quantity]) => ({
+            item_id,
+            delivered_quantity
+          }))
+        }
+      }])
+
       clearTimeout(timeout)
       setShowPartialModal(false)
       alert('✅ Delivery recorded!')
@@ -231,6 +246,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
           event_type: 'DELETE',
           entity: 'orders',
           entity_id: order.id,
+          performed_by: user?.id,
           payload: { items_count: orderItems?.length || 0 }
         }])
 

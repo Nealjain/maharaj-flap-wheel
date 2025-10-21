@@ -323,6 +323,25 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
 
       console.log('All order items updated successfully')
 
+      // Log audit event
+      await supabase.from('audit_logs').insert([{
+        event_type: 'UPDATE',
+        entity: 'orders',
+        entity_id: orderId,
+        performed_by: user?.id,
+        payload: {
+          company_id: selectedCompany,
+          transport_company_id: selectedTransportCompany || null,
+          notes: notes,
+          items: orderItems.map(oi => ({
+            item_id: oi.item_id,
+            quantity: oi.quantity,
+            price: oi.price,
+            due_date: oi.due_date || null
+          }))
+        }
+      }])
+
       console.log('Order updated successfully, delivered quantities preserved')
       addToast('Order updated successfully!', 'success')
       
