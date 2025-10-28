@@ -274,25 +274,96 @@ export default function UsersPage() {
           </div>
         </div>
 
-        {/* Users List */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <div className="overflow-x-auto -mx-4 sm:mx-0">
+        {/* Users List - Mobile Card View */}
+        <div className="space-y-4 md:hidden">
+          {filteredUsers.map((user, index) => (
+            <motion.div
+              key={user.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 shadow-sm"
+            >
+              {/* User Info */}
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center space-x-3 flex-1 min-w-0">
+                  <div className="h-12 w-12 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center flex-shrink-0">
+                    <span className="text-primary-600 dark:text-primary-400 font-medium text-lg">
+                      {user.full_name?.charAt(0) || user.email.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      {user.full_name || 'No name'}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                      {user.email}
+                    </div>
+                    <div className="mt-1">
+                      {getRoleBadge(user.role)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Joined Date */}
+              <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-3">
+                <ClockIcon className="h-4 w-4 mr-1" />
+                Joined {new Date(user.created_at).toLocaleDateString()}
+              </div>
+
+              {/* Actions */}
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <select
+                    value={user.role}
+                    onChange={(e) => handleRoleChange(user.id, e.target.value as any)}
+                    disabled={updatingUserId === user.id}
+                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white disabled:opacity-50"
+                  >
+                    <option value="user">User</option>
+                    <option value="staff">Staff</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                  <button
+                    onClick={() => handleDeleteUser(user.id, user.email)}
+                    disabled={updatingUserId === user.id}
+                    className="p-2 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md disabled:opacity-50 border border-red-300 dark:border-red-600"
+                    title="Delete user"
+                  >
+                    <TrashIcon className="h-5 w-5" />
+                  </button>
+                </div>
+                <button
+                  onClick={() => router.push(`/users/${user.id}/activity`)}
+                  className="w-full px-3 py-2 text-sm font-medium text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 border border-primary-300 dark:border-primary-600 rounded-md hover:bg-primary-50 dark:hover:bg-primary-900/20"
+                >
+                  View Activity
+                </button>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Users List - Desktop Table View */}
+        <div className="hidden md:block bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
-                  <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     User
                   </th>
-                  <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden md:table-cell">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Role
                   </th>
-                  <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden lg:table-cell">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Joined
                   </th>
-                  <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Actions
                   </th>
-                  <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden sm:table-cell">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Activity
                   </th>
                 </tr>
@@ -306,41 +377,38 @@ export default function UsersPage() {
                     transition={{ delay: index * 0.05 }}
                     className="hover:bg-gray-50 dark:hover:bg-gray-700/50"
                   >
-                    <td className="px-3 sm:px-6 py-3 sm:py-4">
+                    <td className="px-6 py-4">
                       <div className="flex items-center">
-                        <div className="flex-shrink-0 h-8 w-8 sm:h-10 sm:w-10">
-                          <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
-                            <span className="text-primary-600 dark:text-primary-400 font-medium text-xs sm:text-sm">
+                        <div className="flex-shrink-0 h-10 w-10">
+                          <div className="h-10 w-10 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
+                            <span className="text-primary-600 dark:text-primary-400 font-medium text-sm">
                               {user.full_name?.charAt(0) || user.email.charAt(0).toUpperCase()}
                             </span>
                           </div>
                         </div>
-                        <div className="ml-2 sm:ml-4 min-w-0">
-                          <div className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate">
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
                             {user.full_name || 'No name'}
                           </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
                             {user.email}
-                          </div>
-                          <div className="md:hidden mt-1">
-                            {getRoleBadge(user.role)}
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap hidden md:table-cell">
+                    <td className="px-6 py-4 whitespace-nowrap">
                       {getRoleBadge(user.role)}
                     </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm text-gray-500 dark:text-gray-400 hidden lg:table-cell">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       {new Date(user.created_at).toLocaleDateString()}
                     </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center space-x-2">
                         <select
                           value={user.role}
                           onChange={(e) => handleRoleChange(user.id, e.target.value as any)}
                           disabled={updatingUserId === user.id}
-                          className="px-2 sm:px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-xs sm:text-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white disabled:opacity-50 w-full sm:w-auto"
+                          className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white disabled:opacity-50"
                         >
                           <option value="user">User</option>
                           <option value="staff">Staff</option>
@@ -352,11 +420,11 @@ export default function UsersPage() {
                           className="p-1.5 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded disabled:opacity-50"
                           title="Delete user"
                         >
-                          <TrashIcon className="h-4 w-4" />
+                          <TrashIcon className="h-5 w-5" />
                         </button>
                       </div>
                     </td>
-                    <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium hidden sm:table-cell">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <button
                         onClick={() => router.push(`/users/${user.id}/activity`)}
                         className="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300"
