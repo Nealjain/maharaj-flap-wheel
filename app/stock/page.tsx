@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/auth'
 import { useToast } from '@/lib/toast'
 import CSVExport from '@/components/CSVExport'
 import StockLedger from '@/components/StockLedger'
+import StockDetails from '@/components/StockDetails'
 import { adjustStock } from '@/lib/stock-adjustment'
 import {
   PlusIcon,
@@ -37,6 +38,8 @@ export default function StockPage() {
   const [editingItem, setEditingItem] = useState<string | null>(null)
   const [showLedger, setShowLedger] = useState(false)
   const [ledgerRefreshTrigger, setLedgerRefreshTrigger] = useState(0)
+  const [showDetails, setShowDetails] = useState(false)
+  const [selectedItemForDetails, setSelectedItemForDetails] = useState<any>(null)
   const [showAdjustModal, setShowAdjustModal] = useState(false)
   const [selectedItemForAdjust, setSelectedItemForAdjust] = useState<any>(null)
   const [adjustmentType, setAdjustmentType] = useState<'add' | 'remove' | 'set'>('add')
@@ -322,7 +325,11 @@ export default function StockPage() {
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: index * 0.05 }}
-                          className="hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                          className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
+                          onClick={() => {
+                            setSelectedItemForDetails(item)
+                            setShowDetails(true)
+                          }}
                         >
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div>
@@ -368,7 +375,7 @@ export default function StockPage() {
                               {stockStatus.label}
                             </span>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium" onClick={(e) => e.stopPropagation()}>
                             {editingItem === item.id ? (
                               <div className="flex items-center space-x-2">
                                 <input
@@ -651,6 +658,16 @@ export default function StockPage() {
         isOpen={showLedger} 
         onClose={() => setShowLedger(false)} 
         refreshTrigger={ledgerRefreshTrigger}
+      />
+
+      {/* Stock Details */}
+      <StockDetails
+        isOpen={showDetails}
+        onClose={() => {
+          setShowDetails(false)
+          setSelectedItemForDetails(null)
+        }}
+        item={selectedItemForDetails}
       />
     </Layout>
   )
