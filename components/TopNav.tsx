@@ -88,6 +88,22 @@ export default function TopNav() {
                       </div>
                     </div>
 
+                    {/* Admin Link */}
+                    {isAdmin && (
+                      <div className="p-2 border-b border-gray-200 dark:border-gray-700">
+                        <button
+                          onClick={() => {
+                            setShowUserMenu(false)
+                            router.push('/admin/users')
+                          }}
+                          className="flex items-center space-x-3 w-full px-3 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        >
+                          <UserCircleIcon className="h-5 w-5" />
+                          <span>Manage Users</span>
+                        </button>
+                      </div>
+                    )}
+
                     {/* Sign Out */}
                     <div className="p-2">
                       <button

@@ -128,20 +128,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password,
     })
     
-    // Log login activity
+    // Check if user is approved
     if (data?.user) {
       try {
+        const { data: profileData, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('status')
+          .eq('id', data.user.id)
+          .single()
+
+        if (profileError) {
+          console.error('Error checking user status:', profileError)
+          await supabase.auth.signOut()
+          return { error: { message: 'Error checking account status' } }
+        }
+
+        // Check approval status
+        if (profileData.status === 'pending') {
+          await supabase.auth.signOut()
+          return { error: { message: 'Your account is pending approval. Please wait for admin approval.' } }
+        }
+
+        if (profileData.status === 'rejected') {
+          await supabase.auth.signOut()
+          return { error: { message: 'Your account has been rejected. Please contact the administrator.' } }
+        }
+
+        if (profileData.status === 'disabled') {
+          await supabase.auth.signOut()
+          return { error: { message: 'Your account has been disabled. Please contact the administrator.' } }
+        }
+
+        // Log successful login
         await supabase.from('login_activities').insert({
           user_id: data.user.id,
           success: true,
-          ip: null, // Will be set by server if needed
+          ip: null,
           user_agent: typeof window !== 'undefined' ? window.navigator.userAgent : null
         })
       } catch (logError) {
-        console.error('Error logging login activity:', logError)
+        console.error('Error during login check:', logError)
+        await supabase.auth.signOut()
+        return { error: { message: 'Error during login. Please try again.' } }
       }
     } else if (error) {
-      // Log failed login attempt (if we have user info)
       console.error('Login failed:', error)
     }
     

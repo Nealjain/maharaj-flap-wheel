@@ -37,9 +37,8 @@ const masters = [
   { name: 'Transport', href: '/masters/transport-companies', icon: TruckIcon },
 ]
 
-const admin = [
-  { name: 'Users', href: '/users', icon: UserGroupIcon },
-  { name: 'Settings', href: '/settings', icon: CogIcon },
+const adminLinks = [
+  { name: 'Manage Users', href: '/admin/users', icon: UserGroupIcon },
 ]
 
 export default function Sidebar() {
@@ -187,7 +186,7 @@ export default function Sidebar() {
                     <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Administration
                     </div>
-                    {admin.map((item) => {
+                    {adminLinks.map((item) => {
                       const isActive = pathname === item.href
                       return (
                         <Link
@@ -336,7 +335,7 @@ export default function Sidebar() {
                 <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Administration
                 </div>
-                {admin.map((item) => {
+                {adminLinks.map((item) => {
                   const isActive = pathname === item.href
                   return (
                     <Link
