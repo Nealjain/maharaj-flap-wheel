@@ -10,7 +10,8 @@ import {
   ShieldCheckIcon,
   UserGroupIcon,
   MagnifyingGlassIcon,
-  ClockIcon
+  ClockIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline'
 
 interface User {
@@ -84,6 +85,45 @@ export default function UsersPage() {
     } catch (error) {
       console.error('Error updating user role:', error)
       alert('Failed to update user role')
+    } finally {
+      setUpdatingUserId(null)
+    }
+  }
+
+  const handleDeleteUser = async (userId: string, userEmail: string) => {
+    if (!confirm(`Are you sure you want to permanently delete ${userEmail}?\n\nThis action cannot be undone and will remove:\n- User account\n- All user data\n- Login history\n\nType "DELETE" to confirm.`)) {
+      return
+    }
+
+    const confirmText = prompt('Type DELETE to confirm:')
+    if (confirmText !== 'DELETE') {
+      alert('Deletion cancelled')
+      return
+    }
+
+    setUpdatingUserId(userId)
+    try {
+      const response = await fetch('/api/users', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ userId })
+      })
+
+      const result = await response.json()
+
+      if (result.error) {
+        throw new Error(result.error)
+      }
+
+      // Remove from local state
+      setUsers(prev => prev.filter(user => user.id !== userId))
+
+      alert('User deleted successfully!')
+    } catch (error) {
+      console.error('Error deleting user:', error)
+      alert('Failed to delete user. They may have associated data.')
     } finally {
       setUpdatingUserId(null)
     }
@@ -295,16 +335,26 @@ export default function UsersPage() {
                       {new Date(user.created_at).toLocaleDateString()}
                     </td>
                     <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium">
-                      <select
-                        value={user.role}
-                        onChange={(e) => handleRoleChange(user.id, e.target.value as any)}
-                        disabled={updatingUserId === user.id}
-                        className="px-2 sm:px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-xs sm:text-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white disabled:opacity-50 w-full sm:w-auto"
-                      >
-                        <option value="user">User</option>
-                        <option value="staff">Staff</option>
-                        <option value="admin">Admin</option>
-                      </select>
+                      <div className="flex items-center space-x-2">
+                        <select
+                          value={user.role}
+                          onChange={(e) => handleRoleChange(user.id, e.target.value as any)}
+                          disabled={updatingUserId === user.id}
+                          className="px-2 sm:px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-xs sm:text-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white disabled:opacity-50 w-full sm:w-auto"
+                        >
+                          <option value="user">User</option>
+                          <option value="staff">Staff</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                        <button
+                          onClick={() => handleDeleteUser(user.id, user.email)}
+                          disabled={updatingUserId === user.id}
+                          className="p-1.5 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded disabled:opacity-50"
+                          title="Delete user"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      </div>
                     </td>
                     <td className="px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-xs sm:text-sm font-medium hidden sm:table-cell">
                       <button

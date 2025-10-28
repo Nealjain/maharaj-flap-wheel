@@ -64,3 +64,51 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { userId } = body
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Missing userId' }, { status: 400 })
+    }
+
+    // Get user info before deletion for audit log
+    const { data: userData } = await supabase
+      .from('user_profiles')
+      .select('email, full_name')
+      .eq('id', userId)
+      .single()
+
+    // Delete user profile (this will cascade to auth.users if configured)
+    const { error } = await supabase
+      .from('user_profiles')
+      .delete()
+      .eq('id', userId)
+
+    if (error) {
+      console.error('Error deleting user:', error)
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+
+    // Log audit event
+    await supabase
+      .from('audit_logs')
+      .insert([{
+        event_type: 'DELETE',
+        entity: 'user_profiles',
+        entity_id: userId,
+        payload: { 
+          email: userData?.email,
+          full_name: userData?.full_name,
+          deleted_at: new Date().toISOString()
+        }
+      }])
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Error in users DELETE API:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
