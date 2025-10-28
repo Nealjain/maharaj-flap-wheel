@@ -35,9 +35,10 @@ interface StockLog {
 interface StockLedgerProps {
   isOpen: boolean
   onClose: () => void
+  refreshTrigger?: number
 }
 
-export default function StockLedger({ isOpen, onClose }: StockLedgerProps) {
+export default function StockLedger({ isOpen, onClose, refreshTrigger }: StockLedgerProps) {
   const [logs, setLogs] = useState<StockLog[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedLog, setExpandedLog] = useState<string | null>(null)
@@ -46,7 +47,7 @@ export default function StockLedger({ isOpen, onClose }: StockLedgerProps) {
     if (isOpen) {
       fetchLogs()
     }
-  }, [isOpen])
+  }, [isOpen, refreshTrigger])
 
   const fetchLogs = async () => {
     setLoading(true)

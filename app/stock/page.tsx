@@ -5,8 +5,11 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import Layout from '@/components/Layout'
 import { useData } from '@/lib/optimized-data-provider'
+import { useAuth } from '@/lib/auth'
+import { useToast } from '@/lib/toast'
 import CSVExport from '@/components/CSVExport'
 import StockLedger from '@/components/StockLedger'
+import { adjustStock } from '@/lib/stock-adjustment'
 import {
   PlusIcon,
   MagnifyingGlassIcon,
@@ -24,18 +27,22 @@ import {
 
 export default function StockPage() {
   const router = useRouter()
-  const { items, loading, updateItem } = useData()
+  const { items, loading, updateItem, refetch } = useData()
+  const { user } = useAuth()
+  const { addToast } = useToast()
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(20) // Reduced from loading all items
   const [editingItem, setEditingItem] = useState<string | null>(null)
   const [showLedger, setShowLedger] = useState(false)
+  const [ledgerRefreshTrigger, setLedgerRefreshTrigger] = useState(0)
   const [showAdjustModal, setShowAdjustModal] = useState(false)
   const [selectedItemForAdjust, setSelectedItemForAdjust] = useState<any>(null)
   const [adjustmentType, setAdjustmentType] = useState<'add' | 'remove' | 'set'>('add')
   const [adjustmentQuantity, setAdjustmentQuantity] = useState<number>(0)
   const [adjustmentNotes, setAdjustmentNotes] = useState('')
+  const [isAdjusting, setIsAdjusting] = useState(false)
   const [editForm, setEditForm] = useState({
     physical_stock: 0,
     reserved_stock: 0
@@ -595,21 +602,42 @@ export default function StockPage() {
                 {selectedItemForAdjust && (
                   <button
                     onClick={async () => {
-                      const newStock = 
-                        adjustmentType === 'add' ? selectedItemForAdjust.physical_stock + adjustmentQuantity :
-                        adjustmentType === 'remove' ? Math.max(0, selectedItemForAdjust.physical_stock - adjustmentQuantity) :
-                        adjustmentQuantity
+                      if (adjustmentQuantity <= 0) {
+                        addToast('Please enter a valid quantity', 'error')
+                        return
+                      }
 
-                      await updateItem(selectedItemForAdjust.id, { physical_stock: newStock })
-                      
-                      setShowAdjustModal(false)
-                      setSelectedItemForAdjust(null)
-                      setAdjustmentQuantity(0)
-                      setAdjustmentNotes('')
+                      setIsAdjusting(true)
+                      try {
+                        const result = await adjustStock(
+                          selectedItemForAdjust.id,
+                          adjustmentType,
+                          adjustmentQuantity,
+                          selectedItemForAdjust.physical_stock,
+                          adjustmentNotes,
+                          user?.id
+                        )
+
+                        if (result.success) {
+                          addToast(`Stock adjusted successfully! New stock: ${result.newStock}`, 'success')
+                          await refetch.items() // Refresh items data
+                          setLedgerRefreshTrigger(prev => prev + 1) // Trigger ledger refresh
+                          
+                          setShowAdjustModal(false)
+                          setSelectedItemForAdjust(null)
+                          setAdjustmentQuantity(0)
+                          setAdjustmentNotes('')
+                        } else {
+                          addToast('Failed to adjust stock. Please try again.', 'error')
+                        }
+                      } finally {
+                        setIsAdjusting(false)
+                      }
                     }}
-                    className="px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700"
+                    disabled={isAdjusting}
+                    className="px-4 py-2 bg-primary-600 text-white rounded-md text-sm font-medium hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Apply Adjustment
+                    {isAdjusting ? 'Adjusting...' : 'Apply Adjustment'}
                   </button>
                 )}
               </div>
@@ -619,7 +647,11 @@ export default function StockPage() {
       )}
 
       {/* Stock Ledger */}
-      <StockLedger isOpen={showLedger} onClose={() => setShowLedger(false)} />
+      <StockLedger 
+        isOpen={showLedger} 
+        onClose={() => setShowLedger(false)} 
+        refreshTrigger={ledgerRefreshTrigger}
+      />
     </Layout>
   )
 }
