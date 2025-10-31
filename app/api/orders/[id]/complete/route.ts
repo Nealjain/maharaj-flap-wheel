@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase-server'
+import { createClient } from '@supabase/supabase-js'
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
 
 // Complete order handler
 async function completeOrder(orderId: string) {
@@ -7,6 +10,18 @@ async function completeOrder(orderId: string) {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     throw new Error('Missing Supabase configuration')
   }
+  
+  // Create admin client at runtime
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  )
   
   console.log('Starting completeOrder for:', orderId)
   
