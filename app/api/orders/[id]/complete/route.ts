@@ -3,6 +3,11 @@ import { supabaseAdmin } from '@/lib/supabase-server'
 
 // Complete order handler
 async function completeOrder(orderId: string) {
+  // Runtime check for environment variables
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error('Missing Supabase configuration')
+  }
+  
   console.log('Starting completeOrder for:', orderId)
   
   // Update order status to completed

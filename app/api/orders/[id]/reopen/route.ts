@@ -6,6 +6,11 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Runtime check for environment variables
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('Missing Supabase configuration')
+    }
+    
     const { id: orderId } = await params
     
     console.log('Reopening order:', orderId)
