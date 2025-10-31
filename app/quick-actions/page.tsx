@@ -32,56 +32,50 @@ export default function QuickActionsPage() {
   const actions: QuickAction[] = [
     {
       title: 'Create Order',
-      description: 'Start a new order for a customer',
+      description: 'New customer order',
       href: '/orders/create',
       icon: ShoppingCartIcon
     },
     {
-      title: 'Add New Item',
-      description: 'Add a new product to inventory',
-      href: '/masters/items/create',
-      icon: PlusIcon
-    },
-    {
-      title: 'Manage Stock',
-      description: 'View and adjust inventory levels',
-      href: '/stock',
-      icon: CubeIcon
-    },
-    {
-      title: 'Add Company',
-      description: 'Register a new customer company',
-      href: '/masters/companies/create',
-      icon: BuildingOfficeIcon
-    },
-    {
-      title: 'Add Transport Company',
-      description: 'Register a new transport carrier',
-      href: '/masters/transport/create',
-      icon: TruckIcon
-    },
-    {
-      title: 'View All Orders',
-      description: 'Browse and manage all orders',
+      title: 'View Orders',
+      description: 'Manage all orders',
       href: '/orders',
       icon: DocumentTextIcon
     },
     {
-      title: 'Master Data',
-      description: 'Manage items, companies, and transport',
-      href: '/masters',
+      title: 'Manage Stock',
+      description: 'Inventory levels',
+      href: '/stock',
+      icon: CubeIcon
+    },
+    {
+      title: 'Dashboard',
+      description: 'View analytics',
+      href: '/dashboard',
       icon: ChartBarIcon
     },
     {
+      title: 'Add Item',
+      description: 'New product',
+      href: '/masters/items/create',
+      icon: PlusIcon
+    },
+    {
+      title: 'Add Company',
+      description: 'New customer',
+      href: '/masters/companies/create',
+      icon: BuildingOfficeIcon
+    },
+    {
       title: 'Manage Users',
-      description: 'User management and permissions',
+      description: 'User permissions',
       href: '/admin/users',
       icon: UserGroupIcon,
       adminOnly: true
     },
     {
       title: 'Reference IDs',
-      description: 'Generate registration reference codes',
+      description: 'Registration codes',
       href: '/admin/reference-ids',
       icon: KeyIcon,
       adminOnly: true
@@ -105,55 +99,45 @@ export default function QuickActionsPage() {
           </p>
         </div>
 
-        {/* Actions Grid */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Actions Grid - 2 columns for mobile, 4 for desktop */}
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
           {filteredActions.map((action, index) => {
             const Icon = action.icon
             return (
               <motion.div
                 key={action.href}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: index * 0.05 }}
               >
                 <Link
                   href={action.href}
                   className="group block h-full"
                 >
-                  <div className="h-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-md transition-all duration-200">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center mb-3">
-                          <div className="flex-shrink-0 w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center group-hover:bg-gray-200 dark:group-hover:bg-gray-600 transition-colors">
-                            <Icon className="h-5 w-5 text-gray-600 dark:text-gray-300" />
-                          </div>
-                          {action.adminOnly && (
-                            <span className="ml-2 px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300 rounded">
-                              Admin
-                            </span>
-                          )}
-                        </div>
-                        <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">
+                  <div className="relative h-full bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl p-4 sm:p-6 hover:border-primary-500 dark:hover:border-primary-500 hover:shadow-lg active:scale-95 transition-all duration-200">
+                    {action.adminOnly && (
+                      <span className="absolute top-2 right-2 px-1.5 py-0.5 text-[10px] font-bold bg-red-500 text-white rounded">
+                        ADMIN
+                      </span>
+                    )}
+                    <div className="flex flex-col items-center text-center space-y-3">
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
+                        <Icon className="h-7 w-7 sm:h-8 sm:w-8 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm sm:text-base font-bold text-gray-900 dark:text-white mb-1">
                           {action.title}
                         </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
                           {action.description}
                         </p>
                       </div>
-                      <ArrowRightIcon className="flex-shrink-0 ml-4 h-5 w-5 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 group-hover:translate-x-1 transition-all" />
                     </div>
                   </div>
                 </Link>
               </motion.div>
             )
           })}
-        </div>
-
-        {/* Help Text */}
-        <div className="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            <strong>Tip:</strong> You can also access these actions from the navigation menu or use keyboard shortcuts for faster navigation.
-          </p>
         </div>
       </div>
     </Layout>
