@@ -15,6 +15,7 @@ export default function CreateItemPage() {
   const router = useRouter()
   const { createItem, items } = useData()
   const [loading, setLoading] = useState(false)
+  const [taskType, setTaskType] = useState<'create' | 'adjust' | 'transfer' | ''>('')
   const [formData, setFormData] = useState({
     sku: '',
     name: '',
@@ -96,14 +97,58 @@ export default function CreateItemPage() {
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Create New Item
+            Inventory Management
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Add a new product to your inventory
+            Select a task to get started
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Task Selector */}
+        {!taskType && (
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              What would you like to do?
+            </h2>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                onClick={() => setTaskType('create')}
+                className="p-4 text-left border-2 border-gray-200 dark:border-gray-600 rounded-lg hover:border-primary-500 dark:hover:border-primary-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                <div className="font-medium text-gray-900 dark:text-white">Create New Item</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">Add a new product to inventory</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push('/stock')}
+                className="p-4 text-left border-2 border-gray-200 dark:border-gray-600 rounded-lg hover:border-primary-500 dark:hover:border-primary-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                <div className="font-medium text-gray-900 dark:text-white">Adjust Stock</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">Update existing stock levels</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push('/orders/create')}
+                className="p-4 text-left border-2 border-gray-200 dark:border-gray-600 rounded-lg hover:border-primary-500 dark:hover:border-primary-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                <div className="font-medium text-gray-900 dark:text-white">Create Order</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">Place a new order</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push('/masters/items')}
+                className="p-4 text-left border-2 border-gray-200 dark:border-gray-600 rounded-lg hover:border-primary-500 dark:hover:border-primary-400 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                <div className="font-medium text-gray-900 dark:text-white">View All Items</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">Browse inventory catalog</div>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {taskType === 'create' && (
+          <form onSubmit={handleSubmit} className="space-y-6">
           {/* Item Details */}
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
@@ -250,11 +295,11 @@ export default function CreateItemPage() {
           <div className="flex justify-end space-x-3">
             <button
               type="button"
-              onClick={() => router.push('/masters/items')}
+              onClick={() => setTaskType('')}
               className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700"
             >
               <XMarkIcon className="h-4 w-4 mr-2" />
-              Cancel
+              Back
             </button>
             <button
               type="submit"
@@ -275,6 +320,7 @@ export default function CreateItemPage() {
             </button>
           </div>
         </form>
+        )}
       </div>
     </Layout>
   )

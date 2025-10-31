@@ -64,7 +64,7 @@ export interface Order {
   company_id: string
   transport_company_id?: string
   created_by: string
-  status: 'reserved' | 'completed' | 'cancelled'
+  status: 'pending' | 'completed' | 'cancelled'
   notes?: string
   created_at: string
   updated_at: string

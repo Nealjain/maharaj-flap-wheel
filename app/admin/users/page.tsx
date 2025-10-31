@@ -130,6 +130,31 @@ export default function UserManagementPage() {
     }
   }
 
+  const enableUser = async (userId: string) => {
+    if (!confirm('Are you sure you want to enable this user? They will be able to login again.')) {
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({ 
+          status: 'approved',
+          approved_by: user?.id,
+          approved_at: new Date().toISOString()
+        })
+        .eq('id', userId)
+
+      if (error) throw error
+
+      addToast('User enabled successfully', 'success')
+      fetchUsers()
+    } catch (error: any) {
+      console.error('Error enabling user:', error)
+      addToast('Failed to enable user', 'error')
+    }
+  }
+
   const deleteUser = async (userId: string, userEmail: string) => {
     if (!confirm(`Are you sure you want to permanently delete ${userEmail}? This action cannot be undone.`)) {
       return
@@ -273,52 +298,41 @@ export default function UserManagementPage() {
           </button>
         </div>
 
-        {/* Users Table */}
+        {/* Users List */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
           </div>
         ) : (
-          <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    User
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Role
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Joined
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {filteredUsers.map((userProfile, index) => (
-                  <motion.tr
-                    key={userProfile.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">
-                          {userProfile.full_name || 'No name'}
-                        </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
-                          {userProfile.email}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+          <>
+            {/* Mobile Card View */}
+            <div className="md:hidden space-y-4">
+              {filteredUsers.map((userProfile, index) => (
+                <motion.div
+                  key={userProfile.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 space-y-3"
+                >
+                  {/* User Info */}
+                  <div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-white">
+                      {userProfile.full_name || 'No name'}
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      {userProfile.email}
+                    </div>
+                  </div>
+
+                  {/* Status and Role */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Status</div>
+                      {getStatusBadge(userProfile.status)}
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">Role</div>
                       <select
                         value={userProfile.role}
                         onChange={(e) => updateUserRole(userProfile.id, e.target.value)}
@@ -329,67 +343,198 @@ export default function UserManagementPage() {
                         <option value="manager">Manager</option>
                         <option value="admin">Admin</option>
                       </select>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(userProfile.status)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {new Date(userProfile.created_at).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex items-center space-x-2">
-                        {userProfile.status === 'pending' && (
-                          <>
-                            <button
-                              onClick={() => approveUser(userProfile.id)}
-                              className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
-                              title="Approve"
-                            >
-                              <CheckCircleIcon className="h-5 w-5" />
-                            </button>
-                            <button
-                              onClick={() => rejectUser(userProfile.id)}
-                              className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                              title="Reject"
-                            >
-                              <XCircleIcon className="h-5 w-5" />
-                            </button>
-                          </>
-                        )}
-                        {userProfile.status === 'approved' && userProfile.id !== user?.id && (
-                          <button
-                            onClick={() => disableUser(userProfile.id)}
-                            className="text-orange-600 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300"
-                            title="Disable"
+                    </div>
+                  </div>
+
+                  {/* Joined Date */}
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    Joined: {new Date(userProfile.created_at).toLocaleDateString()}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center space-x-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                    {userProfile.status === 'pending' && (
+                      <>
+                        <button
+                          onClick={() => approveUser(userProfile.id)}
+                          className="flex-1 flex items-center justify-center px-3 py-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-md text-sm font-medium hover:bg-green-100 dark:hover:bg-green-900/30"
+                        >
+                          <CheckCircleIcon className="h-4 w-4 mr-1" />
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => rejectUser(userProfile.id)}
+                          className="flex-1 flex items-center justify-center px-3 py-2 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-md text-sm font-medium hover:bg-red-100 dark:hover:bg-red-900/30"
+                        >
+                          <XCircleIcon className="h-4 w-4 mr-1" />
+                          Reject
+                        </button>
+                      </>
+                    )}
+                    {userProfile.status === 'approved' && userProfile.id !== user?.id && (
+                      <button
+                        onClick={() => disableUser(userProfile.id)}
+                        className="flex-1 flex items-center justify-center px-3 py-2 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400 rounded-md text-sm font-medium hover:bg-orange-100 dark:hover:bg-orange-900/30"
+                      >
+                        <ExclamationTriangleIcon className="h-4 w-4 mr-1" />
+                        Disable
+                      </button>
+                    )}
+                    {userProfile.status === 'disabled' && (
+                      <button
+                        onClick={() => enableUser(userProfile.id)}
+                        className="flex-1 flex items-center justify-center px-3 py-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-md text-sm font-medium hover:bg-green-100 dark:hover:bg-green-900/30"
+                      >
+                        <CheckCircleIcon className="h-4 w-4 mr-1" />
+                        Enable
+                      </button>
+                    )}
+                    {userProfile.status === 'rejected' && (
+                      <button
+                        onClick={() => approveUser(userProfile.id)}
+                        className="flex-1 flex items-center justify-center px-3 py-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-md text-sm font-medium hover:bg-green-100 dark:hover:bg-green-900/30"
+                      >
+                        <CheckCircleIcon className="h-4 w-4 mr-1" />
+                        Approve
+                      </button>
+                    )}
+                    {userProfile.id !== user?.id && (
+                      <button
+                        onClick={() => deleteUser(userProfile.id, userProfile.email)}
+                        className="px-3 py-2 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-md text-sm font-medium hover:bg-red-100 dark:hover:bg-red-900/30"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        User
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Role
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Joined
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    {filteredUsers.map((userProfile, index) => (
+                      <motion.tr
+                        key={userProfile.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div>
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                              {userProfile.full_name || 'No name'}
+                            </div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                              {userProfile.email}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <select
+                            value={userProfile.role}
+                            onChange={(e) => updateUserRole(userProfile.id, e.target.value)}
+                            disabled={userProfile.id === user?.id}
+                            className="text-sm border border-gray-300 dark:border-gray-600 rounded px-2 py-1 dark:bg-gray-700 dark:text-white disabled:opacity-50"
                           >
-                            <ExclamationTriangleIcon className="h-5 w-5" />
-                          </button>
-                        )}
-                        {userProfile.status === 'rejected' && (
-                          <button
-                            onClick={() => approveUser(userProfile.id)}
-                            className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
-                            title="Approve"
-                          >
-                            <CheckCircleIcon className="h-5 w-5" />
-                          </button>
-                        )}
-                        {userProfile.id !== user?.id && (
-                          <button
-                            onClick={() => deleteUser(userProfile.id, userProfile.email)}
-                            className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                            title="Delete"
-                          >
-                            <TrashIcon className="h-5 w-5" />
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </motion.tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                            <option value="staff">Staff</option>
+                            <option value="manager">Manager</option>
+                            <option value="admin">Admin</option>
+                          </select>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {getStatusBadge(userProfile.status)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {new Date(userProfile.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex items-center space-x-2">
+                            {userProfile.status === 'pending' && (
+                              <>
+                                <button
+                                  onClick={() => approveUser(userProfile.id)}
+                                  className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
+                                  title="Approve"
+                                >
+                                  <CheckCircleIcon className="h-5 w-5" />
+                                </button>
+                                <button
+                                  onClick={() => rejectUser(userProfile.id)}
+                                  className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                                  title="Reject"
+                                >
+                                  <XCircleIcon className="h-5 w-5" />
+                                </button>
+                              </>
+                            )}
+                            {userProfile.status === 'approved' && userProfile.id !== user?.id && (
+                              <button
+                                onClick={() => disableUser(userProfile.id)}
+                                className="text-orange-600 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300"
+                                title="Disable"
+                              >
+                                <ExclamationTriangleIcon className="h-5 w-5" />
+                              </button>
+                            )}
+                            {userProfile.status === 'disabled' && (
+                              <button
+                                onClick={() => enableUser(userProfile.id)}
+                                className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
+                                title="Enable"
+                              >
+                                <CheckCircleIcon className="h-5 w-5" />
+                              </button>
+                            )}
+                            {userProfile.status === 'rejected' && (
+                              <button
+                                onClick={() => approveUser(userProfile.id)}
+                                className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
+                                title="Approve"
+                              >
+                                <CheckCircleIcon className="h-5 w-5" />
+                              </button>
+                            )}
+                            {userProfile.id !== user?.id && (
+                              <button
+                                onClick={() => deleteUser(userProfile.id, userProfile.email)}
+                                className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                                title="Delete"
+                              >
+                                <TrashIcon className="h-5 w-5" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </Layout>

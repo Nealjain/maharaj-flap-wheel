@@ -186,7 +186,7 @@ export default function CreateOrderPage() {
         company_id: selectedCompany,
         transport_company_id: selectedTransportCompany || null,
         created_by: user.id,
-        status: 'reserved',
+        status: 'pending',
         notes: notes,
         order_items: orderItems.map(oi => ({
           item_id: oi.item_id,

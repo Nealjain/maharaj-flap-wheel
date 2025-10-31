@@ -19,7 +19,7 @@ import { motion } from 'framer-motion'
 
 export default function Dashboard() {
   const { user, profile } = useAuth()
-  const { dashboardKPIs, orders, items, loading } = useData()
+  const { dashboardKPIs, loading } = useData()
 
   // Only show loading state if we're still loading essential data
   const isLoading = loading.orders || loading.items
@@ -170,56 +170,22 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Quick Actions */}
+        {/* Quick Access Link */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">
-            Quick Actions
-          </h2>
-          
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Need to perform a task?
+              </h2>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Access all common operations in one place
+              </p>
+            </div>
             <Link
-              href="/orders/create"
-              className="flex items-center p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800 hover:bg-primary-100 dark:hover:bg-primary-900/30 transition-colors duration-200"
+              href="/quick-actions"
+              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700"
             >
-              <ShoppingCartIcon className="h-6 w-6 text-primary-600 dark:text-primary-400" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-primary-800 dark:text-primary-200">
-                  Create New Order
-                </p>
-                <p className="text-xs text-primary-600 dark:text-primary-400">
-                  Start a new order process
-                </p>
-              </div>
-            </Link>
-
-            <Link
-              href="/stock"
-              className="flex items-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors duration-200"
-            >
-              <CubeIcon className="h-6 w-6 text-green-600 dark:text-green-400" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-green-800 dark:text-green-200">
-                  Manage Stock
-                </p>
-                <p className="text-xs text-green-600 dark:text-green-400">
-                  Update inventory levels
-                </p>
-              </div>
-            </Link>
-
-            <Link
-              href="/masters"
-              className="flex items-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors duration-200"
-            >
-              <ChartBarIcon className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-purple-800 dark:text-purple-200">
-                  Master Data
-                </p>
-                <p className="text-xs text-purple-600 dark:text-purple-400">
-                  Manage items, companies, units
-                </p>
-              </div>
+              Quick Actions →
             </Link>
           </div>
         </div>

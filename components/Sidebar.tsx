@@ -22,10 +22,12 @@ import {
   TruckIcon,
   WrenchScrewdriverIcon,
   ChevronDownIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  BoltIcon
 } from '@heroicons/react/24/outline'
 
 const coreOperations = [
+  { name: 'Quick Actions', href: '/quick-actions', icon: BoltIcon },
   { name: 'Dashboard', href: '/dashboard', icon: ChartBarIcon },
   { name: 'Orders', href: '/orders', icon: ShoppingCartIcon },
   { name: 'Stock', href: '/stock', icon: CubeIcon },
@@ -95,11 +97,12 @@ export default function Sidebar() {
             <div className="flex flex-col h-full">
               {/* Header */}
               <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-                <Link href="/dashboard" className="flex items-center space-x-2" onClick={() => setIsOpen(false)}>
-                  <div className="h-8 w-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">M</span>
+                <Link href="/quick-actions" className="flex items-center space-x-2" onClick={() => setIsOpen(false)}>
+                  <img src="/logo.svg" alt="Maharaja Flap Wheel" className="h-8 w-8" />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold text-gray-900 dark:text-white leading-tight">Maharaja</span>
+                    <span className="text-xs text-gray-600 dark:text-gray-400 leading-tight">Flap Wheel</span>
                   </div>
-                  <span className="text-xl font-bold text-gray-900 dark:text-white">Maharj Flap Wheel</span>
                 </Link>
                 <button
                   onClick={toggleSidebar}
@@ -247,16 +250,17 @@ export default function Sidebar() {
         )}
       </AnimatePresence>
 
-      {/* Desktop sidebar - always visible on large screens */}
+      {/* Desktop sidebar - fixed width */}
       <div className="hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:left-0 lg:w-64 lg:bg-white lg:dark:bg-gray-800 lg:shadow-xl lg:border-r lg:border-gray-200 lg:dark:border-gray-700 lg:z-30">
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-            <Link href="/dashboard" className="flex items-center space-x-2">
-              <div className="h-8 w-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">M</span>
+          <div className="flex items-center p-4 border-b border-gray-200 dark:border-gray-700">
+            <Link href="/quick-actions" className="flex items-center space-x-2">
+              <img src="/logo.svg" alt="Maharaja Flap Wheel" className="h-10 w-10 flex-shrink-0" />
+              <div className="flex flex-col">
+                <span className="text-base font-bold text-gray-900 dark:text-white leading-tight">Maharaja</span>
+                <span className="text-xs text-gray-600 dark:text-gray-400 leading-tight">Flap Wheel</span>
               </div>
-              <span className="text-xl font-bold text-gray-900 dark:text-white">Maharj Flap Wheel</span>
             </Link>
           </div>
 

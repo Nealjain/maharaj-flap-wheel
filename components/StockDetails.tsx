@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { formatDateTime } from '@/lib/csv-export'
 import {
@@ -12,7 +13,8 @@ import {
   TruckIcon,
   ClockIcon,
   ExclamationTriangleIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  ArrowTopRightOnSquareIcon
 } from '@heroicons/react/24/outline'
 
 interface OrderDetail {
@@ -35,6 +37,7 @@ interface StockDetailsProps {
 export default function StockDetails({ isOpen, onClose, item }: StockDetailsProps) {
   const [orders, setOrders] = useState<OrderDetail[]>([])
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
     if (isOpen && item) {
@@ -67,12 +70,15 @@ export default function StockDetails({ isOpen, onClose, item }: StockDetailsProp
           )
         `)
         .eq('item_id', item.id)
-        .in('orders.status', ['reserved', 'completed'])
-        .order('orders.created_at', { ascending: false })
 
       if (error) throw error
 
-      const formattedOrders = data?.map((oi: any) => ({
+      // Filter by status in JavaScript since we can't filter nested relations in Supabase
+      const filteredData = data?.filter((oi: any) => 
+        oi.orders && ['pending', 'completed'].includes(oi.orders.status)
+      ) || []
+
+      const formattedOrders = filteredData.map((oi: any) => ({
         order_id: oi.orders.id,
         company_name: oi.orders.companies.name,
         quantity: oi.quantity,
@@ -81,7 +87,12 @@ export default function StockDetails({ isOpen, onClose, item }: StockDetailsProp
         order_created_at: oi.orders.created_at,
         due_date: oi.due_date,
         transport_company: oi.orders.transport_companies?.name || null
-      })) || []
+      }))
+
+      // Sort by created_at descending
+      formattedOrders.sort((a, b) => 
+        new Date(b.order_created_at).getTime() - new Date(a.order_created_at).getTime()
+      )
 
       setOrders(formattedOrders)
     } catch (error) {
@@ -96,7 +107,7 @@ export default function StockDetails({ isOpen, onClose, item }: StockDetailsProp
 
   const availableStock = item.physical_stock - item.reserved_stock
   const totalReserved = orders
-    .filter(o => o.order_status === 'reserved')
+    .filter(o => o.order_status === 'pending')
     .reduce((sum, o) => sum + (o.quantity - o.delivered_quantity), 0)
 
   return (
@@ -214,13 +225,25 @@ export default function StockDetails({ isOpen, onClose, item }: StockDetailsProp
                                 {order.company_name}
                               </span>
                             </div>
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${
-                              isCompleted 
-                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
-                            }`}>
-                              {isCompleted ? 'Completed' : 'Reserved'}
-                            </span>
+                            <div className="flex items-center space-x-2">
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                isCompleted 
+                                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                  : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
+                              }`}>
+                                {isCompleted ? 'Completed' : 'Pending'}
+                              </span>
+                              <button
+                                onClick={() => {
+                                  router.push(`/orders/${order.order_id}`)
+                                  onClose()
+                                }}
+                                className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-primary-600 dark:text-primary-400"
+                                title="View order"
+                              >
+                                <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+                              </button>
+                            </div>
                           </div>
 
                           {/* Quantities */}
@@ -249,8 +272,8 @@ export default function StockDetails({ isOpen, onClose, item }: StockDetailsProp
                             </div>
                           </div>
 
-                          {/* Due Date */}
-                          {order.due_date && (
+                          {/* Due Date - Only show for pending orders */}
+                          {!isCompleted && order.due_date && (
                             <div className={`flex items-center space-x-2 text-xs mb-2 ${
                               isOverdue ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
                             }`}>
@@ -264,8 +287,8 @@ export default function StockDetails({ isOpen, onClose, item }: StockDetailsProp
                             </div>
                           )}
 
-                          {/* Transport */}
-                          {order.transport_company && (
+                          {/* Transport - Only show for pending orders */}
+                          {!isCompleted && order.transport_company && (
                             <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400 mb-2">
                               <TruckIcon className="h-4 w-4" />
                               <span>{order.transport_company}</span>
@@ -293,7 +316,7 @@ export default function StockDetails({ isOpen, onClose, item }: StockDetailsProp
                         Stock Alert
                       </h4>
                       <p className="text-sm text-red-700 dark:text-red-400">
-                        All stock is reserved. You need to add {Math.abs(availableStock)} more units to fulfill pending orders.
+                        All stock is allocated to pending orders. You need to add {Math.abs(availableStock)} more units to fulfill them.
                       </p>
                     </div>
                   </div>
@@ -309,7 +332,7 @@ export default function StockDetails({ isOpen, onClose, item }: StockDetailsProp
                         Stock Available
                       </h4>
                       <p className="text-sm text-green-700 dark:text-green-400">
-                        You have {availableStock} units available after fulfilling all reserved orders.
+                        You have {availableStock} units available after fulfilling all pending orders.
                       </p>
                     </div>
                   </div>

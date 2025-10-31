@@ -17,9 +17,11 @@ import {
   CalendarIcon,
   TrashIcon,
   PencilIcon,
-  TruckIcon as DeliveryIcon
+  TruckIcon as DeliveryIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline'
 import { formatDate, formatDateTime } from '@/lib/csv-export'
+import { CheckCircleIcon } from '@heroicons/react/16/solid'
 
 interface OrderDetailPageProps {
   params: Promise<{
@@ -57,6 +59,53 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
       }
     }
   }, [orders, orderId])
+
+  const handleCompleteOrder = async () => {
+    console.log('✅ COMPLETE: Starting completion process')
+    
+    if (!isAdmin || !order) {
+      console.error('❌ COMPLETE: Blocked - isAdmin:', isAdmin, 'hasOrder:', !!order)
+      return
+    }
+
+    setLoading(true)
+    try {
+      console.log('✅ COMPLETE: Updating order status to completed:', order.id)
+      
+      // Update order status to completed
+      const { error: orderError } = await supabase
+        .from('orders')
+        .update({ status: 'completed' })
+        .eq('id', order.id)
+
+      if (orderError) {
+        console.error('❌ COMPLETE: Error updating order:', orderError)
+        throw orderError
+      }
+
+      console.log('✅ COMPLETE: Order completed successfully')
+
+      // Log audit event
+      await supabase
+        .from('audit_logs')
+        .insert([{
+          event_type: 'UPDATE',
+          entity: 'orders',
+          entity_id: order.id,
+          performed_by: user?.id,
+          payload: { action: 'complete', old_status: order.status, new_status: 'completed' }
+        }])
+
+      // Refresh and reload
+      await refetch.orders()
+      console.log('✅ COMPLETE: Complete, reloading page')
+      window.location.reload()
+    } catch (error: any) {
+      console.error('❌ COMPLETE: Failed:', error)
+      alert('Failed to complete order: ' + (error.message || 'Unknown error'))
+      setLoading(false)
+    }
+  }
 
 
 
@@ -142,20 +191,72 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
         })
         
         // Show helpful error message
-        alert(`❌ RLS Policy Error!\n\nPlease run URGENT_RLS_FIX.sql in Supabase SQL Editor.\n\nError: ${errorDetails?.message}`)
+        alert(`❌ RLS Policy Error!
+
+Please run URGENT_RLS_FIX.sql in Supabase SQL Editor.
+
+Error: ${errorDetails?.message}`)
         throw new Error(errorDetails?.message || 'Update failed')
       }
 
       console.log('✅ All items updated successfully')
 
       // Update local state immediately
+      const updatedOrderItems = order.order_items.map((item: any) => ({
+        ...item,
+        delivered_quantity: partialDeliveries[item.item_id] || item.delivered_quantity
+      }))
+
       setOrder((prev: any) => ({
         ...prev,
-        order_items: prev.order_items.map((item: any) => ({
-          ...item,
-          delivered_quantity: partialDeliveries[item.item_id] || item.delivered_quantity
-        }))
+        order_items: updatedOrderItems
       }))
+
+      // Check if all items are fully delivered
+      const allItemsDelivered = updatedOrderItems.every((item: any) => 
+        (item.delivered_quantity || 0) >= item.quantity
+      )
+
+      // If all items are delivered, auto-complete the order
+      if (allItemsDelivered) {
+        console.log('✅ All items fully delivered, auto-completing order...')
+        
+        try {
+          // Update order status to completed directly
+          const { error: completeError } = await supabase
+            .from('orders')
+            .update({ status: 'completed' })
+            .eq('id', order.id)
+
+          if (completeError) {
+            throw completeError
+          }
+
+          console.log('✅ Order auto-completed successfully')
+          
+          // Log audit event
+          await supabase
+            .from('audit_logs')
+            .insert([{
+              event_type: 'UPDATE',
+              entity: 'orders',
+              entity_id: order.id,
+              performed_by: user?.id,
+              payload: { action: 'auto_complete', old_status: order.status, new_status: 'completed' }
+            }])
+
+          // Refresh data
+          await refetch.orders()
+          
+          clearTimeout(timeout)
+          setShowPartialModal(false)
+          window.location.reload()
+          return
+        } catch (completeError: any) {
+          console.error('❌ Error auto-completing order:', completeError)
+          // Continue with partial delivery success message
+        }
+      }
 
       // Log audit event for delivery
       await supabase.from('audit_logs').insert([{
@@ -174,7 +275,9 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
 
       clearTimeout(timeout)
       setShowPartialModal(false)
-      alert('✅ Delivery recorded!')
+      if (!allItemsDelivered) {
+        alert('✅ Delivery recorded!')
+      }
     } catch (error: any) {
       console.error('Error recording delivery:', error)
       clearTimeout(timeout)
@@ -187,15 +290,16 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
   }
 
   const handleDeleteOrder = async () => {
-    if (!isAdmin || !order) return
+    console.log('🗑️ DELETE: Starting deletion process')
     
-    if (!confirm(`Are you sure you want to delete this order? This action cannot be undone.`)) {
+    if (!isAdmin || !order) {
+      console.error('❌ DELETE: Blocked - isAdmin:', isAdmin, 'hasOrder:', !!order)
       return
     }
 
     setDeleting(true)
     try {
-      console.log('Deleting order directly from Supabase:', order.id)
+      console.log('🗑️ DELETE: Deleting order:', order.id)
       
       // Get order items first to release stock
       const { data: orderItems } = await supabase
@@ -203,7 +307,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
         .select('item_id, quantity')
         .eq('order_id', order.id)
 
-      console.log('Order items to release:', orderItems)
+      console.log('📦 DELETE: Order items to release:', orderItems)
 
       // Release reserved stock for each item
       if (orderItems && orderItems.length > 0) {
@@ -216,7 +320,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
 
           if (currentItem) {
             const newReservedStock = Math.max(0, currentItem.reserved_stock - item.quantity)
-            console.log(`Releasing stock for item ${item.item_id}: ${currentItem.reserved_stock} -> ${newReservedStock}`)
+            console.log(`📦 Releasing stock for item ${item.item_id}: ${currentItem.reserved_stock} -> ${newReservedStock}`)
             
             await supabase
               .from('items')
@@ -233,11 +337,11 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
         .eq('id', order.id)
 
       if (error) {
-        console.error('Error deleting order:', error)
+        console.error('❌ DELETE: Error deleting order:', error)
         throw error
       }
 
-      console.log('Order deleted successfully from Supabase')
+      console.log('✅ DELETE: Order deleted successfully')
 
       // Log audit event
       await supabase
@@ -250,27 +354,70 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
           payload: { items_count: orderItems?.length || 0 }
         }])
 
-      // Refresh orders list
+      // Refresh and navigate
       await refetch.orders()
-      console.log('Orders refreshed, navigating...')
-      
-      // Navigate to orders page
+      console.log('✅ DELETE: Complete, navigating to orders page')
       router.push('/orders')
-      alert('Order deleted successfully!')
     } catch (error: any) {
-      console.error('Error deleting order:', error)
+      console.error('❌ DELETE: Failed:', error)
       alert('Failed to delete order: ' + (error.message || 'Unknown error'))
     } finally {
       setDeleting(false)
     }
   }
 
+  const handleReopenOrder = async () => {
+    console.log('🔄 REOPEN: Starting reopen process')
+    
+    if (!isAdmin || !order) {
+      console.error('❌ REOPEN: Blocked - isAdmin:', isAdmin, 'hasOrder:', !!order)
+      return
+    }
+
+    setLoading(true)
+    try {
+      console.log('🔄 REOPEN: Updating order status to pending:', order.id)
+      
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: 'pending' })
+        .eq('id', order.id)
+
+      if (error) {
+        console.error('❌ REOPEN: Error updating order:', error)
+        throw error
+      }
+
+      console.log('✅ REOPEN: Order reopened successfully')
+
+      // Log audit event
+      await supabase
+        .from('audit_logs')
+        .insert([{
+          event_type: 'UPDATE',
+          entity: 'orders',
+          entity_id: order.id,
+          performed_by: user?.id,
+          payload: { action: 'reopen', old_status: 'completed', new_status: 'pending' }
+        }])
+
+      // Refresh and reload
+      await refetch.orders()
+      console.log('✅ REOPEN: Complete, reloading page')
+      window.location.reload()
+    } catch (error: any) {
+      console.error('❌ REOPEN: Failed:', error)
+      alert('Failed to reopen order: ' + (error.message || 'Unknown error'))
+      setLoading(false)
+    }
+  }
+
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      reserved: { 
+      pending: { 
         color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300',
         icon: ClockIcon,
-        label: 'Reserved'
+        label: 'Pending'
       },
       completed: { 
         color: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300',
@@ -310,6 +457,11 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
     sum + item.quantity, 0
   ) || 0
 
+  // Check if all items are fully delivered
+  const allItemsDelivered = order.order_items?.every((item: any) => 
+    (item.delivered_quantity || 0) >= item.quantity
+  ) || false
+
   return (
     <Layout>
       <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
@@ -333,9 +485,10 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             {getStatusBadge(order.status)}
+            {/* DEBUG: isAdmin = {String(isAdmin)}, user = {user?.email} */}
             {isAdmin && (
               <>
-                {order.status === 'reserved' && (
+                {order.status === 'pending' && (
                   <>
                     <button
                       onClick={() => router.push(`/orders/${order.id}/edit`)}
@@ -351,12 +504,55 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
                       <DeliveryIcon className="h-4 w-4 sm:mr-2" />
                       <span className="hidden sm:inline">Record Delivery</span>
                     </button>
+                    {allItemsDelivered && (
+                      <button
+                        type="button"
+                        onClick={handleCompleteOrder}
+                        disabled={loading}
+                        className="inline-flex items-center px-3 sm:px-4 py-2 border border-transparent rounded-md shadow-sm text-xs sm:text-sm font-medium text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 cursor-pointer whitespace-nowrap"
+                      >
+                        {loading ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white sm:mr-2"></div>
+                            <span className="hidden sm:inline">Completing...</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircleIcon className="h-4 w-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Complete Order</span>
+                            <span className="sm:hidden">Complete</span>
+                          </>
+                        )}
+                      </button>
+                    )}
                   </>
                 )}
+                {order.status === 'completed' && (
+                  <button
+                    type="button"
+                    onClick={handleReopenOrder}
+                    disabled={loading}
+                    className="inline-flex items-center px-3 sm:px-4 py-2 border border-orange-600 dark:border-orange-500 rounded-md shadow-sm text-xs sm:text-sm font-medium text-orange-600 dark:text-orange-400 bg-white dark:bg-gray-800 hover:bg-orange-50 dark:hover:bg-orange-900/20 disabled:opacity-50 cursor-pointer whitespace-nowrap"
+                  >
+                    {loading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600 sm:mr-2"></div>
+                        <span className="hidden sm:inline">Reopening...</span>
+                      </>
+                    ) : (
+                      <>
+                        <ArrowPathIcon className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Reopen Order</span>
+                        <span className="sm:hidden">Reopen</span>
+                      </>
+                    )}
+                  </button>
+                )}
                 <button
+                  type="button"
                   onClick={handleDeleteOrder}
                   disabled={deleting}
-                  className="inline-flex items-center px-3 sm:px-4 py-2 border border-transparent rounded-md shadow-sm text-xs sm:text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                  className="inline-flex items-center px-3 sm:px-4 py-2 border border-transparent rounded-md shadow-sm text-xs sm:text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap"
                 >
                   {deleting ? (
                     <>
@@ -640,6 +836,15 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
                     </div>
                   ))}
                 </div>
+                
+                {/* Show Complete Order button if all items are fully delivered */}
+                {allItemsDelivered && (
+                  <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                    <p className="text-sm text-green-700 dark:text-green-400 mb-2">
+                      ✓ All items are fully delivered. You can complete this order now.
+                    </p>
+                  </div>
+                )}
                 
                 <div className="mt-6 flex justify-end space-x-3">
                   <button

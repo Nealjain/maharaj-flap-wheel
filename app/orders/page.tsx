@@ -49,7 +49,7 @@ export default function OrdersPage() {
 
   const getStatusColor = (status: Order['status']) => {
     switch (status) {
-      case 'reserved':
+      case 'pending':
         return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
       case 'completed':
         return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
@@ -62,7 +62,7 @@ export default function OrdersPage() {
 
   const getStatusIcon = (status: Order['status']) => {
     switch (status) {
-      case 'reserved':
+      case 'pending':
         return <ClockIconOutline className="h-4 w-4" />
       case 'completed':
         return <CheckCircleIcon className="h-4 w-4" />
@@ -174,7 +174,7 @@ export default function OrdersPage() {
               </div>
 
               <div className="flex flex-wrap gap-2">
-                {['All', 'reserved', 'completed', 'cancelled'].map(status => (
+                {['All', 'pending', 'completed', 'cancelled'].map(status => (
                   <button
                     key={status}
                     onClick={() => setFilterStatus(status)}
@@ -184,7 +184,7 @@ export default function OrdersPage() {
                         : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                     }`}
                   >
-                    {status === 'reserved' ? 'Pending' : status.charAt(0).toUpperCase() + status.slice(1)}
+                    {status.charAt(0).toUpperCase() + status.slice(1)}
                   </button>
                 ))}
               </div>
@@ -228,7 +228,7 @@ export default function OrdersPage() {
                             </h3>
                             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${getStatusColor(order.status)}`}>
                               {getStatusIcon(order.status)}
-                              <span className="ml-1">{order.status === 'reserved' ? 'Pending' : order.status}</span>
+                              <span className="ml-1">{order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span>
                             </span>
                           </div>
                           <p className="text-xs text-gray-500 dark:text-gray-400">

@@ -5,13 +5,17 @@ import { AuthProvider } from '@/lib/auth'
 import { OptimizedDataProvider } from '@/lib/optimized-data-provider'
 import { ThemeProvider } from '@/lib/theme'
 import Toaster from '@/components/Toaster'
+import AutoRefresh from '@/components/AutoRefresh'
 import { Analytics } from '@vercel/analytics/next'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Maharaj Flap Wheel',
-  description: 'Inventory management for Maharaj Flap Wheel',
+  title: 'Maharaja Flap Wheel',
+  description: 'Inventory management for Maharaja Flap Wheel',
+  icons: {
+    icon: '/favicon.svg',
+  },
 }
 
 export default function RootLayout({
@@ -20,11 +24,12 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider>
           <AuthProvider>
             <OptimizedDataProvider>
+              <AutoRefresh />
               <Toaster>
                 {children}
               </Toaster>

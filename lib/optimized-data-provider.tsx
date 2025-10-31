@@ -99,7 +99,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
     const todaysOrders = orders.filter(o =>
       new Date(o.created_at).toDateString() === new Date().toDateString()
     ).length
-    const pendingOrders = orders.filter(o => o.status === 'reserved').length
+    const pendingOrders = orders.filter(o => o.status === 'pending').length
     const completedOrders = orders.filter(o => o.status === 'completed').length
 
     const totalItems = items.length
@@ -227,7 +227,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
           return Promise.race([
             task.fetch(),
             new Promise((_, reject) => 
-              setTimeout(() => reject(new Error(`${task.type} fetch timeout`)), 5000)
+              setTimeout(() => reject(new Error(`${task.type} fetch timeout`)), 15000)
             )
           ])
         }

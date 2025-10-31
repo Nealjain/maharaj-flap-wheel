@@ -41,10 +41,8 @@ export default function LoginPage() {
       if (error) {
         setError('Invalid email or password')
       } else {
-        // Wait for auth state to update before redirecting
-        setTimeout(() => {
-          router.push('/dashboard')
-        }, 100)
+        // Reload the page to ensure fresh state
+        window.location.href = '/quick-actions'
       }
     } catch (error) {
       setError('An error occurred. Please try again.')
