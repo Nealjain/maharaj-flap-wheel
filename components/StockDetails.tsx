@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
@@ -14,8 +14,322 @@ import {
   ClockIcon,
   ExclamationTriangleIcon,
   CheckCircleIcon,
-  ArrowTopRightOnSquareIcon
+  ArrowTopRightOnSquareIcon,
+  DocumentTextIcon,
+  UserIcon,
+  PlusIcon,
+  MinusIcon,
+  MagnifyingGlassIcon
 } from '@heroicons/react/24/outline'
+
+// Combined Activity Timeline Component
+function CombinedActivityTimeline({ itemId, orders, loading: ordersLoading, onClose }: { 
+  itemId: string
+  orders: OrderDetail[]
+  loading: boolean
+  onClose: () => void
+}) {
+  const router = useRouter()
+  const [ledger, setLedger] = useState<any[]>([])
+  const [ledgerLoading, setLedgerLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterType, setFilterType] = useState<'all' | 'orders' | 'stock'>('all')
+
+  useEffect(() => {
+    fetchLedger()
+  }, [itemId])
+
+  const fetchLedger = async () => {
+    setLedgerLoading(true)
+    try {
+      // Try with user profile join first
+      let { data, error } = await supabase
+        .from('stock_ledger')
+        .select(`
+          *,
+          user_profiles!stock_ledger_performed_by_fkey (
+            full_name,
+            email
+          )
+        `)
+        .eq('item_id', itemId)
+        .order('created_at', { ascending: false })
+
+      // If join fails, try without it
+      if (error) {
+        console.log('Fetching stock ledger without user join...')
+        const result = await supabase
+          .from('stock_ledger')
+          .select('*')
+          .eq('item_id', itemId)
+          .order('created_at', { ascending: false })
+        
+        data = result.data
+        error = result.error
+      }
+
+      if (error) throw error
+      setLedger(data || [])
+    } catch (error) {
+      console.error('Error fetching stock ledger:', error)
+      setLedger([])
+    } finally {
+      setLedgerLoading(false)
+    }
+  }
+
+  // Combine and sort all activities by date with filters
+  const combinedActivities = useMemo(() => {
+    let activities: any[] = []
+
+    // Add stock ledger entries
+    if (filterType === 'all' || filterType === 'stock') {
+      ledger.forEach(entry => {
+        activities.push({
+          type: 'ledger',
+          date: new Date(entry.created_at),
+          data: entry
+        })
+      })
+    }
+
+    // Add orders
+    if (filterType === 'all' || filterType === 'orders') {
+      orders.forEach(order => {
+        activities.push({
+          type: 'order',
+          date: new Date(order.order_created_at),
+          data: order
+        })
+      })
+    }
+
+    // Apply search filter
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase()
+      activities = activities.filter(activity => {
+        if (activity.type === 'order') {
+          return activity.data.company_name.toLowerCase().includes(searchLower)
+        } else {
+          const entry = activity.data
+          return (
+            (entry.notes && entry.notes.toLowerCase().includes(searchLower)) ||
+            (entry.user_profiles?.full_name && entry.user_profiles.full_name.toLowerCase().includes(searchLower)) ||
+            (entry.user_profiles?.email && entry.user_profiles.email.toLowerCase().includes(searchLower))
+          )
+        }
+      })
+    }
+
+    // Sort by date descending (newest first)
+    return activities.sort((a, b) => b.date.getTime() - a.date.getTime())
+  }, [ledger, orders, searchTerm, filterType])
+
+  const getTransactionIcon = (type: string) => {
+    switch (type) {
+      case 'adjustment_add':
+      case 'order_cancelled':
+        return <PlusIcon className="h-4 w-4 text-green-600 dark:text-green-400" />
+      case 'adjustment_remove':
+      case 'order_delivered':
+        return <MinusIcon className="h-4 w-4 text-red-600 dark:text-red-400" />
+      default:
+        return <DocumentTextIcon className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+    }
+  }
+
+  const getTransactionLabel = (type: string) => {
+    switch (type) {
+      case 'adjustment_add':
+        return 'Stock Added'
+      case 'adjustment_remove':
+        return 'Stock Removed'
+      case 'adjustment_set':
+        return 'Stock Set'
+      case 'order_delivered':
+        return 'Order Delivered'
+      case 'order_cancelled':
+        return 'Order Cancelled'
+      default:
+        return type
+    }
+  }
+
+  const loading = ordersLoading || ledgerLoading
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center">
+          <ClockIcon className="h-4 w-4 mr-2" />
+          Activity Timeline ({combinedActivities.length})
+        </h3>
+      </div>
+
+      {/* Search and Filter */}
+      <div className="mb-4 space-y-2">
+        <div className="relative">
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search activities..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 pr-4 py-2 w-full text-sm border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white"
+          />
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setFilterType('all')}
+            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+              filterType === 'all'
+                ? 'bg-primary-600 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+            }`}
+          >
+            All
+          </button>
+          <button
+            onClick={() => setFilterType('orders')}
+            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+              filterType === 'orders'
+                ? 'bg-primary-600 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+            }`}
+          >
+            Orders Only
+          </button>
+          <button
+            onClick={() => setFilterType('stock')}
+            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+              filterType === 'stock'
+                ? 'bg-primary-600 text-white'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+            }`}
+          >
+            Stock Changes Only
+          </button>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+        </div>
+      ) : combinedActivities.length === 0 ? (
+        <div className="text-center py-8 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+          <ClockIcon className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">No activity yet</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {combinedActivities.map((activity: any, index: number) => {
+            if (activity.type === 'ledger') {
+              const entry = activity.data
+              const userName = entry.user_profiles?.full_name || entry.user_profiles?.email || 'System'
+              
+              return (
+                <div
+                  key={`ledger-${entry.id}`}
+                  className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      {getTransactionIcon(entry.transaction_type)}
+                      <div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          {getTransactionLabel(entry.transaction_type)}
+                        </div>
+                        <div className="flex items-center space-x-1 text-xs text-gray-600 dark:text-gray-400">
+                          <UserIcon className="h-3 w-3" />
+                          <span className="font-medium">{userName}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <span className={`text-sm font-bold ${
+                      entry.quantity > 0 
+                        ? 'text-green-600 dark:text-green-400' 
+                        : 'text-red-600 dark:text-red-400'
+                    }`}>
+                      {entry.quantity > 0 ? '+' : ''}{entry.quantity}
+                    </span>
+                  </div>
+
+                  {entry.notes && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1 ml-6">
+                      {entry.notes}
+                    </p>
+                  )}
+
+                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 ml-6">
+                    <span>{formatDateTime(entry.created_at)}</span>
+                    <span className="font-medium">Balance: {entry.balance_after}</span>
+                  </div>
+                </div>
+              )
+            } else {
+              // Order activity
+              const order = activity.data
+              const pending = order.quantity - order.delivered_quantity
+              const isCompleted = order.order_status === 'completed'
+              const isOverdue = order.due_date && new Date(order.due_date) < new Date() && !isCompleted
+
+              return (
+                <div
+                  key={`order-${order.order_id}`}
+                  className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 border border-gray-200 dark:border-gray-600"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      <ShoppingCartIcon className="h-4 w-4 text-gray-500" />
+                      <span className="font-medium text-gray-900 dark:text-white text-sm">
+                        {order.company_name}
+                      </span>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                      isCompleted 
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                        : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
+                    }`}>
+                      {isCompleted ? 'Completed' : 'Pending'}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 mb-2 text-xs">
+                    <div>
+                      <span className="text-gray-500 dark:text-gray-400">Ordered:</span>
+                      <span className="ml-1 font-medium text-gray-900 dark:text-white">{order.quantity}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 dark:text-gray-400">Delivered:</span>
+                      <span className="ml-1 font-medium text-green-600 dark:text-green-400">{order.delivered_quantity}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 dark:text-gray-400">Pending:</span>
+                      <span className={`ml-1 font-medium ${pending > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-gray-600 dark:text-gray-400'}`}>
+                        {pending}
+                      </span>
+                    </div>
+                  </div>
+
+                  {!isCompleted && order.due_date && (
+                    <div className={`text-xs mb-1 ${isOverdue ? 'text-red-600 dark:text-red-400 font-medium' : 'text-gray-500 dark:text-gray-400'}`}>
+                      Due: {new Date(order.due_date).toLocaleDateString()} {isOverdue && '(Overdue)'}
+                    </div>
+                  )}
+
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    {formatDateTime(order.order_created_at)}
+                  </div>
+                </div>
+              )
+            }
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
 
 interface OrderDetail {
   order_id: string
@@ -189,122 +503,10 @@ export default function StockDetails({ isOpen, onClose, item }: StockDetailsProp
                 <p className="text-sm text-gray-600 dark:text-gray-400">{item.custom_unit || item.unit}</p>
               </div>
 
-              {/* Orders Using This Item */}
-              <div>
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
-                  <ShoppingCartIcon className="h-4 w-4 mr-2" />
-                  Orders Using This Item ({orders.length})
-                </h3>
+              {/* Combined Activity Timeline */}
+              <CombinedActivityTimeline itemId={item.id} orders={orders} loading={loading} onClose={onClose} />
 
-                {loading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-                  </div>
-                ) : orders.length === 0 ? (
-                  <div className="text-center py-8 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                    <ShoppingCartIcon className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-500 dark:text-gray-400">No orders found for this item</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {orders.map((order) => {
-                      const pending = order.quantity - order.delivered_quantity
-                      const isCompleted = order.order_status === 'completed'
-                      const isOverdue = order.due_date && new Date(order.due_date) < new Date() && !isCompleted
 
-                      return (
-                        <div
-                          key={order.order_id}
-                          className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600"
-                        >
-                          {/* Company & Status */}
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-center space-x-2">
-                              <BuildingOfficeIcon className="h-4 w-4 text-gray-500" />
-                              <span className="font-medium text-gray-900 dark:text-white">
-                                {order.company_name}
-                              </span>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                isCompleted 
-                                  ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                  : 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
-                              }`}>
-                                {isCompleted ? 'Completed' : 'Pending'}
-                              </span>
-                              <button
-                                onClick={() => {
-                                  router.push(`/orders/${order.order_id}`)
-                                  onClose()
-                                }}
-                                className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-primary-600 dark:text-primary-400"
-                                title="View order"
-                              >
-                                <ArrowTopRightOnSquareIcon className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Quantities */}
-                          <div className="grid grid-cols-3 gap-3 mb-3 text-sm">
-                            <div>
-                              <span className="text-gray-500 dark:text-gray-400">Ordered:</span>
-                              <span className="ml-1 font-medium text-gray-900 dark:text-white">
-                                {order.quantity}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-gray-500 dark:text-gray-400">Delivered:</span>
-                              <span className="ml-1 font-medium text-green-600 dark:text-green-400">
-                                {order.delivered_quantity}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-gray-500 dark:text-gray-400">Pending:</span>
-                              <span className={`ml-1 font-medium ${
-                                pending > 0 
-                                  ? 'text-orange-600 dark:text-orange-400' 
-                                  : 'text-gray-600 dark:text-gray-400'
-                              }`}>
-                                {pending}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Due Date - Only show for pending orders */}
-                          {!isCompleted && order.due_date && (
-                            <div className={`flex items-center space-x-2 text-xs mb-2 ${
-                              isOverdue ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'
-                            }`}>
-                              {isOverdue ? (
-                                <ExclamationTriangleIcon className="h-4 w-4" />
-                              ) : (
-                                <ClockIcon className="h-4 w-4" />
-                              )}
-                              <span>Due: {new Date(order.due_date).toLocaleDateString()}</span>
-                              {isOverdue && <span className="font-medium">(Overdue)</span>}
-                            </div>
-                          )}
-
-                          {/* Transport - Only show for pending orders */}
-                          {!isCompleted && order.transport_company && (
-                            <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400 mb-2">
-                              <TruckIcon className="h-4 w-4" />
-                              <span>{order.transport_company}</span>
-                            </div>
-                          )}
-
-                          {/* Order Date */}
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            Order Date: {formatDateTime(order.order_created_at)}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
 
               {/* Stock Alert */}
               {availableStock <= 0 && totalReserved > 0 && (

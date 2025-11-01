@@ -90,6 +90,7 @@ export default function UserManagementPage() {
 
   const rejectUser = async (userId: string) => {
     try {
+      console.log('🚫 Rejecting user:', userId)
       const { error } = await supabase
         .from('user_profiles')
         .update({
@@ -110,11 +111,8 @@ export default function UserManagementPage() {
   }
 
   const disableUser = async (userId: string) => {
-    if (!confirm('Are you sure you want to disable this user? They will not be able to login.')) {
-      return
-    }
-
     try {
+      console.log('⛔ Disabling user:', userId)
       const { error } = await supabase
         .from('user_profiles')
         .update({ status: 'disabled' })
@@ -131,11 +129,8 @@ export default function UserManagementPage() {
   }
 
   const enableUser = async (userId: string) => {
-    if (!confirm('Are you sure you want to enable this user? They will be able to login again.')) {
-      return
-    }
-
     try {
+      console.log('✅ Enabling user:', userId)
       const { error } = await supabase
         .from('user_profiles')
         .update({ 
@@ -156,24 +151,35 @@ export default function UserManagementPage() {
   }
 
   const deleteUser = async (userId: string, userEmail: string) => {
-    if (!confirm(`Are you sure you want to permanently delete ${userEmail}? This action cannot be undone.`)) {
-      return
-    }
-
     try {
-      // Delete from user_profiles (auth.users will cascade)
-      const { error } = await supabase
-        .from('user_profiles')
-        .delete()
-        .eq('id', userId)
+      console.log('🗑️ Deleting user via API:', userId, userEmail)
+      
+      const response = await fetch(`/api/admin/users/${userId}/delete`, {
+        method: 'DELETE'
+      })
 
-      if (error) throw error
+      console.log('📡 Response status:', response.status)
 
-      addToast('User deleted successfully', 'success')
+      const result = await response.json()
+      console.log('📦 Response data:', result)
+
+      if (!response.ok) {
+        console.error('❌ Delete failed:', result.error)
+        throw new Error(result.error || 'Failed to delete user')
+      }
+
+      if (result.partialSuccess) {
+        console.warn('⚠️ Partial success')
+        addToast('User profile deleted, but auth deletion failed. User may still be able to login.', 'warning')
+      } else {
+        console.log('✅ User deleted successfully')
+        addToast('User deleted successfully', 'success')
+      }
+
       fetchUsers()
     } catch (error: any) {
-      console.error('Error deleting user:', error)
-      addToast('Failed to delete user. Try disabling instead.', 'error')
+      console.error('❌ Error deleting user:', error)
+      addToast(`Failed to delete user: ${error.message}`, 'error')
     }
   }
 
@@ -356,15 +362,25 @@ export default function UserManagementPage() {
                     {userProfile.status === 'pending' && (
                       <>
                         <button
-                          onClick={() => approveUser(userProfile.id)}
-                          className="flex-1 flex items-center justify-center px-3 py-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-md text-sm font-medium hover:bg-green-100 dark:hover:bg-green-900/30"
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            approveUser(userProfile.id)
+                          }}
+                          className="flex-1 flex items-center justify-center px-3 py-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-md text-sm font-medium hover:bg-green-100 dark:hover:bg-green-900/30 cursor-pointer"
                         >
                           <CheckCircleIcon className="h-4 w-4 mr-1" />
                           Approve
                         </button>
                         <button
-                          onClick={() => rejectUser(userProfile.id)}
-                          className="flex-1 flex items-center justify-center px-3 py-2 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-md text-sm font-medium hover:bg-red-100 dark:hover:bg-red-900/30"
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            rejectUser(userProfile.id)
+                          }}
+                          className="flex-1 flex items-center justify-center px-3 py-2 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-md text-sm font-medium hover:bg-red-100 dark:hover:bg-red-900/30 cursor-pointer"
                         >
                           <XCircleIcon className="h-4 w-4 mr-1" />
                           Reject
@@ -373,8 +389,13 @@ export default function UserManagementPage() {
                     )}
                     {userProfile.status === 'approved' && userProfile.id !== user?.id && (
                       <button
-                        onClick={() => disableUser(userProfile.id)}
-                        className="flex-1 flex items-center justify-center px-3 py-2 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400 rounded-md text-sm font-medium hover:bg-orange-100 dark:hover:bg-orange-900/30"
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          disableUser(userProfile.id)
+                        }}
+                        className="flex-1 flex items-center justify-center px-3 py-2 bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400 rounded-md text-sm font-medium hover:bg-orange-100 dark:hover:bg-orange-900/30 cursor-pointer"
                       >
                         <ExclamationTriangleIcon className="h-4 w-4 mr-1" />
                         Disable
@@ -382,8 +403,13 @@ export default function UserManagementPage() {
                     )}
                     {userProfile.status === 'disabled' && (
                       <button
-                        onClick={() => enableUser(userProfile.id)}
-                        className="flex-1 flex items-center justify-center px-3 py-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-md text-sm font-medium hover:bg-green-100 dark:hover:bg-green-900/30"
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          enableUser(userProfile.id)
+                        }}
+                        className="flex-1 flex items-center justify-center px-3 py-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-md text-sm font-medium hover:bg-green-100 dark:hover:bg-green-900/30 cursor-pointer"
                       >
                         <CheckCircleIcon className="h-4 w-4 mr-1" />
                         Enable
@@ -391,8 +417,13 @@ export default function UserManagementPage() {
                     )}
                     {userProfile.status === 'rejected' && (
                       <button
-                        onClick={() => approveUser(userProfile.id)}
-                        className="flex-1 flex items-center justify-center px-3 py-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-md text-sm font-medium hover:bg-green-100 dark:hover:bg-green-900/30"
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          approveUser(userProfile.id)
+                        }}
+                        className="flex-1 flex items-center justify-center px-3 py-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-md text-sm font-medium hover:bg-green-100 dark:hover:bg-green-900/30 cursor-pointer"
                       >
                         <CheckCircleIcon className="h-4 w-4 mr-1" />
                         Approve
@@ -400,8 +431,15 @@ export default function UserManagementPage() {
                     )}
                     {userProfile.id !== user?.id && (
                       <button
-                        onClick={() => deleteUser(userProfile.id, userProfile.email)}
-                        className="px-3 py-2 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-md text-sm font-medium hover:bg-red-100 dark:hover:bg-red-900/30"
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          console.log('Delete button clicked!')
+                          deleteUser(userProfile.id, userProfile.email)
+                        }}
+                        className="px-3 py-2 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-md text-sm font-medium hover:bg-red-100 dark:hover:bg-red-900/30 cursor-pointer"
+                        style={{ pointerEvents: 'auto', zIndex: 10 }}
                       >
                         <TrashIcon className="h-4 w-4" />
                       </button>
@@ -475,15 +513,25 @@ export default function UserManagementPage() {
                             {userProfile.status === 'pending' && (
                               <>
                                 <button
-                                  onClick={() => approveUser(userProfile.id)}
-                                  className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    approveUser(userProfile.id)
+                                  }}
+                                  className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 cursor-pointer"
                                   title="Approve"
                                 >
                                   <CheckCircleIcon className="h-5 w-5" />
                                 </button>
                                 <button
-                                  onClick={() => rejectUser(userProfile.id)}
-                                  className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    rejectUser(userProfile.id)
+                                  }}
+                                  className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 cursor-pointer"
                                   title="Reject"
                                 >
                                   <XCircleIcon className="h-5 w-5" />
@@ -492,8 +540,13 @@ export default function UserManagementPage() {
                             )}
                             {userProfile.status === 'approved' && userProfile.id !== user?.id && (
                               <button
-                                onClick={() => disableUser(userProfile.id)}
-                                className="text-orange-600 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300"
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                  disableUser(userProfile.id)
+                                }}
+                                className="text-orange-600 hover:text-orange-800 dark:text-orange-400 dark:hover:text-orange-300 cursor-pointer"
                                 title="Disable"
                               >
                                 <ExclamationTriangleIcon className="h-5 w-5" />
@@ -501,8 +554,13 @@ export default function UserManagementPage() {
                             )}
                             {userProfile.status === 'disabled' && (
                               <button
-                                onClick={() => enableUser(userProfile.id)}
-                                className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                  enableUser(userProfile.id)
+                                }}
+                                className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 cursor-pointer"
                                 title="Enable"
                               >
                                 <CheckCircleIcon className="h-5 w-5" />
@@ -510,8 +568,13 @@ export default function UserManagementPage() {
                             )}
                             {userProfile.status === 'rejected' && (
                               <button
-                                onClick={() => approveUser(userProfile.id)}
-                                className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                  approveUser(userProfile.id)
+                                }}
+                                className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 cursor-pointer"
                                 title="Approve"
                               >
                                 <CheckCircleIcon className="h-5 w-5" />
@@ -519,8 +582,15 @@ export default function UserManagementPage() {
                             )}
                             {userProfile.id !== user?.id && (
                               <button
-                                onClick={() => deleteUser(userProfile.id, userProfile.email)}
-                                className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                  console.log('Delete button clicked!')
+                                  deleteUser(userProfile.id, userProfile.email)
+                                }}
+                                className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 cursor-pointer"
+                                style={{ pointerEvents: 'auto', zIndex: 10 }}
                                 title="Delete"
                               >
                                 <TrashIcon className="h-5 w-5" />
