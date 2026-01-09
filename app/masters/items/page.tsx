@@ -41,7 +41,6 @@ export default function ItemsPage() {
 
   const handleDeleteItem = async (e: React.MouseEvent, itemId: string, itemName: string) => {
     e.preventDefault()
-    // Confirm removed for experience/debug
     addToast('Deleting item...', 'info')
 
     try {

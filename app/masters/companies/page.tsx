@@ -41,11 +41,6 @@ export default function CompaniesPage() {
 
   const handleDeleteCompany = async (e: React.MouseEvent, companyId: string, companyName: string) => {
     e.preventDefault()
-    // Confirm removed for experience/debug
-    // if (!confirm(`Are you sure you want to delete "${companyName}"? This action cannot be undone.`)) {
-    //   return
-    // }
-
     addToast('Deleting company...', 'info')
 
 

@@ -41,7 +41,6 @@ export default function TransportCompaniesPage() {
 
   const handleDeleteCompany = async (e: React.MouseEvent, companyId: string, companyName: string) => {
     e.preventDefault()
-    // Confirm removed for experience/debug
     addToast('Deleting transport company...', 'info')
 
     try {
