@@ -2,19 +2,22 @@ import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
 // Initialize Supabase Admin Client (Service Role)
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-        auth: {
-            autoRefreshToken: false,
-            persistSession: false
-        }
-    }
-)
-
 export async function POST(request: Request) {
     try {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+        const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+        if (!supabaseUrl || !serviceRoleKey) {
+            return NextResponse.json({ error: 'Missing Supabase configuration' }, { status: 500 })
+        }
+
+        const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
+            auth: {
+                autoRefreshToken: false,
+                persistSession: false
+            }
+        })
+
         const body = await request.json()
         const { email, password, fullName, phone, role } = body
 
