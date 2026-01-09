@@ -40,9 +40,8 @@ export default function TransportCompaniesPage() {
   }, [transportCompanies, searchTerm])
 
   const handleDeleteCompany = async (companyId: string, companyName: string) => {
-    if (!confirm(`Are you sure you want to delete "${companyName}"? This action cannot be undone.`)) {
-      return
-    }
+    // Confirm removed for debugging
+    addToast('Deleting transport company...', 'info')
 
     try {
       const { error } = await deleteTransportCompany(companyId)

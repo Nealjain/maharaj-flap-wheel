@@ -40,9 +40,8 @@ export default function ItemsPage() {
   }, [items, searchTerm])
 
   const handleDeleteItem = async (itemId: string, itemName: string) => {
-    if (!confirm(`Are you sure you want to delete "${itemName}"? This action cannot be undone.`)) {
-      return
-    }
+    // Confirm removed for debugging
+    addToast('Deleting item...', 'info')
 
     try {
       const { error } = await deleteItem(itemId)
