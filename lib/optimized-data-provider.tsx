@@ -175,7 +175,6 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
                   quantity,
                   price,
                   delivered_quantity,
-                  due_date,
                   item:items!order_items_item_id_fkey(id, name, sku, unit)
                 )
               `)
