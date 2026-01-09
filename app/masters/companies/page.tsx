@@ -15,9 +15,12 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline'
 
+import { useToast } from '@/lib/toast'
+
 export default function CompaniesPage() {
   const router = useRouter()
   const { companies, loading, deleteCompany } = useData()
+  const { addToast } = useToast()
   const [searchTerm, setSearchTerm] = useState('')
   const [filteredCompanies, setFilteredCompanies] = useState(companies)
 
@@ -48,20 +51,18 @@ export default function CompaniesPage() {
         console.error('Error deleting company:', error)
         // Check if it's a foreign key constraint error
         if (error.message?.includes('foreign key') || error.code === '23503') {
-          alert('Cannot delete this company because it is referenced in one or more orders. Please remove it from all orders first.')
+          addToast('Cannot delete: Company is used in orders. Remove orders first.', 'error')
         } else {
-          alert(`Failed to delete company: ${error.message || 'Please try again.'}`)
+          addToast(`Failed to delete company: ${error.message}`, 'error')
         }
       } else {
-        alert('Company deleted successfully!')
+        addToast('Company deleted successfully', 'success')
+        // Force reload to ensure state is clean
+        window.location.reload()
       }
     } catch (error: any) {
       console.error('Error deleting company:', error)
-      if (error.message?.includes('foreign key') || error.code === '23503') {
-        alert('Cannot delete this company because it is referenced in one or more orders. Please remove it from all orders first.')
-      } else {
-        alert(`Failed to delete company: ${error.message || 'Please try again.'}`)
-      }
+      addToast(`Failed to delete company: ${error.message}`, 'error')
     }
   }
 

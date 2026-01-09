@@ -6,8 +6,8 @@ import { motion } from 'framer-motion'
 import Layout from '@/components/Layout'
 import { useData } from '@/lib/optimized-data-provider'
 import CSVExport from '@/components/CSVExport'
-import { 
-  PlusIcon, 
+import {
+  PlusIcon,
   MagnifyingGlassIcon,
   PencilIcon,
   TrashIcon,
@@ -15,9 +15,12 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline'
 
+import { useToast } from '@/lib/toast'
+
 export default function TransportCompaniesPage() {
   const router = useRouter()
   const { transportCompanies, loading, deleteTransportCompany } = useData()
+  const { addToast } = useToast()
   const [searchTerm, setSearchTerm] = useState('')
   const [filteredCompanies, setFilteredCompanies] = useState(transportCompanies)
 
@@ -26,7 +29,7 @@ export default function TransportCompaniesPage() {
 
     // Apply search filter
     if (searchTerm) {
-      filtered = filtered.filter(company => 
+      filtered = filtered.filter(company =>
         company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         company.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         company.address?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -43,25 +46,22 @@ export default function TransportCompaniesPage() {
 
     try {
       const { error } = await deleteTransportCompany(companyId)
-      
+
       if (error) {
         console.error('Error deleting transport company:', error)
         // Check if it's a foreign key constraint error
         if (error.message?.includes('foreign key') || error.code === '23503') {
-          alert('Cannot delete this transport company because it is referenced in one or more orders. Please remove it from all orders first.')
+          addToast('Cannot delete: Company is used in orders.', 'error')
         } else {
-          alert(`Failed to delete transport company: ${error.message || 'Please try again.'}`)
+          addToast(`Failed to delete company: ${error.message}`, 'error')
         }
       } else {
-        alert('Transport company deleted successfully!')
+        addToast('Transport company deleted successfully', 'success')
+        window.location.reload()
       }
     } catch (error: any) {
       console.error('Error deleting transport company:', error)
-      if (error.message?.includes('foreign key') || error.code === '23503') {
-        alert('Cannot delete this transport company because it is referenced in one or more orders. Please remove it from all orders first.')
-      } else {
-        alert(`Failed to delete transport company: ${error.message || 'Please try again.'}`)
-      }
+      addToast(`Failed to delete company: ${error.message}`, 'error')
     }
   }
 

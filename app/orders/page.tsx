@@ -4,13 +4,13 @@ import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import Layout from '@/components/Layout'
 import Link from 'next/link'
-import { 
-  PlusIcon, 
-  MagnifyingGlassIcon, 
-  ArrowPathIcon, 
-  EyeIcon, 
-  CheckCircleIcon, 
-  ClockIcon as ClockIconOutline, 
+import {
+  PlusIcon,
+  MagnifyingGlassIcon,
+  ArrowPathIcon,
+  EyeIcon,
+  CheckCircleIcon,
+  ClockIcon as ClockIconOutline,
   XCircleIcon,
   BuildingOfficeIcon,
   TruckIcon,
@@ -178,11 +178,10 @@ export default function OrdersPage() {
                   <button
                     key={status}
                     onClick={() => setFilterStatus(status)}
-                    className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium whitespace-nowrap ${
-                      filterStatus === status
+                    className={`px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium whitespace-nowrap ${filterStatus === status
                         ? 'bg-primary-600 text-white'
                         : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-                    }`}
+                      }`}
                   >
                     {status.charAt(0).toUpperCase() + status.slice(1)}
                   </button>
@@ -265,7 +264,7 @@ export default function OrdersPage() {
                             const dueDate = item.due_date ? new Date(item.due_date) : null
                             const isOverdue = dueDate && dueDate < new Date() && remaining > 0
                             const isDueSoon = dueDate && !isOverdue && dueDate <= new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) && remaining > 0
-                            
+
                             return (
                               <div key={idx} className="flex items-center justify-between text-sm">
                                 <div className="flex-1 min-w-0 mr-2">
@@ -287,13 +286,12 @@ export default function OrdersPage() {
                                       </span>
                                     )}
                                     {dueDate && (
-                                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${
-                                        isOverdue 
-                                          ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' 
-                                          : isDueSoon 
-                                          ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                          : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                                      }`}>
+                                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${isOverdue
+                                          ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                          : isDueSoon
+                                            ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                            : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                        }`}>
                                         Due: {dueDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                                       </span>
                                     )}

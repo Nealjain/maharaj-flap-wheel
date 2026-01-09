@@ -6,8 +6,8 @@ import { motion } from 'framer-motion'
 import Layout from '@/components/Layout'
 import { useData } from '@/lib/optimized-data-provider'
 import CSVExport from '@/components/CSVExport'
-import { 
-  PlusIcon, 
+import {
+  PlusIcon,
   MagnifyingGlassIcon,
   PencilIcon,
   TrashIcon,
@@ -15,9 +15,12 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline'
 
+import { useToast } from '@/lib/toast'
+
 export default function ItemsPage() {
   const router = useRouter()
   const { items, loading, deleteItem } = useData()
+  const { addToast } = useToast()
   const [searchTerm, setSearchTerm] = useState('')
   const [filteredItems, setFilteredItems] = useState(items)
 
@@ -26,7 +29,7 @@ export default function ItemsPage() {
 
     // Apply search filter
     if (searchTerm) {
-      filtered = filtered.filter(item => 
+      filtered = filtered.filter(item =>
         item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.description?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -43,25 +46,22 @@ export default function ItemsPage() {
 
     try {
       const { error } = await deleteItem(itemId)
-      
+
       if (error) {
         console.error('Error deleting item:', error)
         // Check if it's a foreign key constraint error
         if (error.message?.includes('foreign key') || error.code === '23503') {
-          alert('Cannot delete this item because it is referenced in one or more orders. Please remove it from all orders first.')
+          addToast('Cannot delete: Item is used in orders. Remove it from orders first.', 'error')
         } else {
-          alert(`Failed to delete item: ${error.message || 'Please try again.'}`)
+          addToast(`Failed to delete item: ${error.message}`, 'error')
         }
       } else {
-        alert('Item deleted successfully!')
+        addToast('Item deleted successfully', 'success')
+        window.location.reload()
       }
     } catch (error: any) {
       console.error('Error deleting item:', error)
-      if (error.message?.includes('foreign key') || error.code === '23503') {
-        alert('Cannot delete this item because it is referenced in one or more orders. Please remove it from all orders first.')
-      } else {
-        alert(`Failed to delete item: ${error.message || 'Please try again.'}`)
-      }
+      addToast(`Failed to delete item: ${error.message}`, 'error')
     }
   }
 
