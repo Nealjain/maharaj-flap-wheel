@@ -1,0 +1,248 @@
+/* ============================================
+   SMOOTH ANIMATIONS - CSS Only (No JS overhead)
+   ============================================ */
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Remove tap highlight on mobile */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Fade in animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Smooth transitions for all interactive elements */
+button, a, input, select, textarea {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hover lift effect */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.hover-lift:active {
+  transform: translateY(0);
+}
+
+/* Loading skeleton shimmer */
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+.skeleton {
+  animation: shimmer 2s infinite linear;
+  background: linear-gradient(90deg, #f0f0f0 0%, #f8f8f8 50%, #f0f0f0 100%);
+  background-size: 1000px 100%;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Mobile-First Optimizations */
+
+/* Minimum touch target size: 44x44px (Apple) / 48x48px (Android) */
+@media (max-width: 768px) {
+  /* All buttons and clickable elements */
+  button,
+  a,
+  input[type="button"],
+  input[type="submit"],
+  .clickable {
+    min-height: 48px;
+    min-width: 48px;
+    padding: 12px 16px;
+  }
+
+  /* Larger text for readability */
+  body {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  /* Input fields - prevent zoom on focus */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+    min-height: 48px;
+    padding: 12px;
+  }
+
+  /* Cards with better spacing */
+  .card {
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+
+  /* Bottom navigation for thumb reach */
+  .mobile-bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 1px solid #e5e7eb;
+    padding: 8px 0;
+    z-index: 50;
+    display: flex;
+    justify-content: space-around;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Larger tap targets for navigation */
+  .mobile-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 16px;
+    min-width: 64px;
+    min-height: 56px;
+    gap: 4px;
+  }
+
+  /* Swipeable cards */
+  .swipeable-card {
+    touch-action: pan-y;
+    user-select: none;
+  }
+
+  /* Full-width buttons on mobile */
+  .mobile-full-button {
+    width: 100%;
+    padding: 16px;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  /* Sticky headers */
+  .mobile-sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: white;
+    padding: 16px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  /* Better spacing between elements */
+  .mobile-spacing > * + * {
+    margin-top: 16px;
+  }
+
+  /* Larger icons */
+  .mobile-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* Pull-to-refresh indicator */
+  .pull-to-refresh {
+    padding: 20px;
+    text-align: center;
+  }
+
+  /* Bottom sheet for modals */
+  .mobile-bottom-sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-radius: 20px 20px 0 0;
+    padding: 24px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Floating action button */
+  .mobile-fab {
+    position: fixed;
+    bottom: 80px;
+    right: 16px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 45;
+  }
+
+  /* Hide desktop-only elements */
+  .desktop-only {
+    display: none !important;
+  }
+
+  /* Show mobile-only elements */
+  .mobile-only {
+    display: block !important;
+  }
+}
+
+/* Dark mode support */
+@media (max-width: 768px) and (prefers-color-scheme: dark) {
+  .mobile-bottom-nav {
+    background: #1f2937;
+    border-top-color: #374151;
+  }
+
+  .mobile-sticky-header {
+    background: #1f2937;
+    border-bottom-color: #374151;
+  }
+
+  .mobile-bottom-sheet {
+    background: #1f2937;
+  }
+}
