@@ -531,8 +531,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
           order_id: orderId,
           item_id: item.item_id,
           quantity: item.quantity,
-          price: item.price,
-          due_date: item.due_date || null
+          price: item.price
         }))
         console.log('Items to insert:', itemsToInsert)
 
