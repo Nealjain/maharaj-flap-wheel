@@ -7,7 +7,7 @@ import Layout from '@/components/Layout'
 import { useData } from '@/lib/optimized-data-provider'
 import { useAuth } from '@/lib/auth'
 import { useToast } from '@/lib/toast'
-import { 
+import {
   ArrowLeftIcon,
   PlusIcon,
   TrashIcon,
@@ -37,16 +37,16 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
   const { orders, items, companies, transportCompanies, updateOrder, refetch } = useData()
   const { user } = useAuth()
   const { addToast } = useToast()
-  
+
   const [orderId, setOrderId] = useState<string>('')
   const [order, setOrder] = useState<any>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  
+
   const [selectedCompany, setSelectedCompany] = useState<string>('')
   const [selectedTransportCompany, setSelectedTransportCompany] = useState<string>('')
   const [orderItems, setOrderItems] = useState<SelectedItem[]>([])
   const [notes, setNotes] = useState<string>('')
-  
+
   // Auto-complete states
   const [companySearch, setCompanySearch] = useState('')
   const [transportSearch, setTransportSearch] = useState('')
@@ -74,7 +74,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
         setNotes(foundOrder.notes || '')
         setCompanySearch(foundOrder.company?.name || '')
         setTransportSearch(foundOrder.transport_company?.name || '')
-        
+
         // Load order items
         if (foundOrder.order_items) {
           const loadedItems = foundOrder.order_items.map((oi: any) => {
@@ -82,7 +82,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
             const fullItem = items?.find(item => item.id === oi.item_id)
             const physicalStock = fullItem?.physical_stock || 0
             const reservedStock = fullItem?.reserved_stock || 0
-            
+
             return {
               item_id: oi.item_id,
               quantity: oi.quantity,
@@ -133,7 +133,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
   const filteredItems = items?.filter(item => {
     return (
       (item.name.toLowerCase().includes(itemSearch.toLowerCase()) ||
-       item.sku.toLowerCase().includes(itemSearch.toLowerCase())) &&
+        item.sku.toLowerCase().includes(itemSearch.toLowerCase())) &&
       !orderItems.some(oi => oi.item_id === item.id)
       // Allow all items, even out of stock
     )
@@ -229,11 +229,11 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
 
     setIsSubmitting(true)
     console.log('Starting order update...')
-    
+
     try {
       // Import supabase
       const { supabase } = await import('@/lib/supabase')
-      
+
       // Update order details
       const { error: orderError } = await supabase
         .from('orders')
@@ -259,10 +259,10 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
 
       // Update each order item individually to preserve delivered_quantity and update due_date
       console.log('Updating order items with due dates:', orderItems)
-      
+
       for (const oi of orderItems) {
         const existingDelivered = deliveredMap.get(oi.item_id) || 0
-        
+
         // Try to update existing item first
         const { data: existing } = await supabase
           .from('order_items')
@@ -277,8 +277,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
             .from('order_items')
             .update({
               quantity: oi.quantity,
-              price: oi.price,
-              due_date: oi.due_date || null
+              price: oi.price
             })
             .eq('order_id', orderId)
             .eq('item_id', oi.item_id)
@@ -287,7 +286,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
             console.error('Error updating item:', oi.item_id, updateError)
             throw updateError
           }
-          console.log('Updated item:', oi.item_id, 'with due_date:', oi.due_date)
+          console.log('Updated item:', oi.item_id)
         } else {
           // Insert new item
           const { error: insertError } = await supabase
@@ -297,8 +296,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
               item_id: oi.item_id,
               quantity: oi.quantity,
               price: oi.price,
-              delivered_quantity: existingDelivered,
-              due_date: oi.due_date || null
+              delivered_quantity: existingDelivered
             })
 
           if (insertError) {
@@ -344,16 +342,16 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
 
       console.log('Order updated successfully, delivered quantities preserved')
       addToast('Order updated successfully!', 'success')
-      
+
       // Refresh orders data before redirecting
       console.log('Refreshing orders data...')
       await refetch.orders()
       console.log('Orders data refreshed')
-      
+
       // Verify the updated order has due dates
       const updatedOrder = orders.find(o => o.id === orderId)
       console.log('Updated order from state:', updatedOrder?.order_items?.map((i: any) => ({ item_id: i.item_id, due_date: i.due_date })))
-      
+
       router.push(`/orders/${orderId}`)
     } catch (error: any) {
       console.error('Error updating order:', error)
@@ -399,7 +397,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="bg-white dark:bg-gray-800 shadow-lg rounded-xl border border-gray-200 dark:border-gray-700 p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Order Details</h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Company Selection */}
               <div className="relative" ref={companyRef}>
@@ -419,14 +417,13 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
                       setShowCompanyDropdown(true)
                     }}
                     onFocus={() => setShowCompanyDropdown(true)}
-                    className={`block w-full pl-10 pr-10 py-2 border rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white ${
-                      selectedCompany ? 'border-green-500 dark:border-green-500' : 'border-gray-300 dark:border-gray-600'
-                    }`}
+                    className={`block w-full pl-10 pr-10 py-2 border rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white ${selectedCompany ? 'border-green-500 dark:border-green-500' : 'border-gray-300 dark:border-gray-600'
+                      }`}
                     placeholder="Search company..."
                     required
                   />
                 </div>
-                
+
                 {showCompanyDropdown && filteredCompanies.length > 0 && (
                   <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-700 shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto">
                     {filteredCompanies.map((company) => (
@@ -463,7 +460,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
                     placeholder="Search transport company..."
                   />
                 </div>
-                
+
                 {showTransportDropdown && filteredTransportCompanies.length > 0 && (
                   <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-700 shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto">
                     {filteredTransportCompanies.map((transport) => (
@@ -498,7 +495,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
           {/* Order Items */}
           <div className="bg-white dark:bg-gray-800 shadow-lg rounded-xl border border-gray-200 dark:border-gray-700 p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Order Items</h3>
-            
+
             {/* Add Item Search */}
             <div className="mb-6 relative" ref={itemRef}>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -520,7 +517,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
                   placeholder="Search by item name or SKU..."
                 />
               </div>
-              
+
               {showItemDropdown && filteredItems.length > 0 && (
                 <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-700 shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none">
                   {filteredItems.map((item) => (
@@ -536,7 +533,7 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
                 </div>
               )}
             </div>
-            
+
             {/* Selected Items */}
             <div className="space-y-4">
               {orderItems.map((orderItem) => {
@@ -555,43 +552,42 @@ export default function EditOrderPage({ params }: EditOrderPageProps) {
                           </p>
                         )}
                       </div>
-                    
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveItem(orderItem.item_id)}
-                      className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200 ml-2"
-                    >
-                      <TrashIcon className="h-5 w-5" />
-                    </button>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="flex items-center space-x-2">
-                      <label className="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">Qty:</label>
-                      <input
-                        type="number"
-                        min="1"
-                        value={orderItem.quantity || ''}
-                        onChange={(e) => handleUpdateItemQuantity(orderItem.item_id, parseInt(e.target.value) || 1)}
-                        className={`flex-1 px-2 py-1 border rounded text-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-white ${
-                          isOverStock ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
-                        }`}
-                      />
+
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveItem(orderItem.item_id)}
+                        className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200 ml-2"
+                      >
+                        <TrashIcon className="h-5 w-5" />
+                      </button>
                     </div>
-                    
-                    <div className="flex items-center space-x-2">
-                      <label className="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">Due Date:</label>
-                      <input
-                        type="date"
-                        value={orderItem.due_date || ''}
-                        onChange={(e) => handleUpdateItemDueDate(orderItem.item_id, e.target.value)}
-                        className="flex-1 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-white"
-                      />
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="flex items-center space-x-2">
+                        <label className="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">Qty:</label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={orderItem.quantity || ''}
+                          onChange={(e) => handleUpdateItemQuantity(orderItem.item_id, parseInt(e.target.value) || 1)}
+                          className={`flex-1 px-2 py-1 border rounded text-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-white ${isOverStock ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
+                            }`}
+                        />
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <label className="text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">Due Date:</label>
+                        <input
+                          type="date"
+                          value={orderItem.due_date || ''}
+                          onChange={(e) => handleUpdateItemDueDate(orderItem.item_id, e.target.value)}
+                          className="flex-1 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-white"
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-              )
-            })}
+                )
+              })}
             </div>
 
             {orderItems.length > 0 && (
