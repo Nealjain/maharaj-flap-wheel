@@ -7,11 +7,15 @@ interface Toast {
   message: string
   type: 'success' | 'error' | 'warning' | 'info'
   duration?: number
+  action?: {
+    label: string
+    onClick: () => void
+  }
 }
 
 interface ToastContextType {
   toasts: Toast[]
-  addToast: (message: string, type?: Toast['type'], duration?: number) => void
+  addToast: (message: string, type?: Toast['type'], duration?: number, action?: Toast['action']) => void
   removeToast: (id: string) => void
 }
 
@@ -20,12 +24,12 @@ const ToastContext = createContext<ToastContextType | undefined>(undefined)
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([])
 
-  const addToast = useCallback((message: string, type: Toast['type'] = 'info', duration = 5000) => {
+  const addToast = useCallback((message: string, type: Toast['type'] = 'info', duration = 5000, action?: Toast['action']) => {
     const id = Math.random().toString(36).substr(2, 9)
-    const newToast: Toast = { id, message, type, duration }
-    
+    const newToast: Toast = { id, message, type, duration, action }
+
     setToasts(prev => [...prev, newToast])
-    
+
     if (duration > 0) {
       setTimeout(() => {
         removeToast(id)
@@ -72,14 +76,28 @@ function ToastItem({ toast, onRemove }: { toast: Toast, onRemove: (id: string) =
 
   return (
     <div className={`px-4 py-3 rounded-lg shadow-lg ${getToastStyles()} max-w-sm`}>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <p className="text-sm font-medium">{toast.message}</p>
-        <button
-          onClick={() => onRemove(toast.id)}
-          className="ml-4 text-white hover:text-gray-200"
-        >
-          ×
-        </button>
+        <div className="flex items-center gap-2">
+          {toast.action && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                toast.action?.onClick()
+                onRemove(toast.id)
+              }}
+              className="text-xs font-bold underline hover:opacity-80 px-2 py-1 rounded bg-white/20 whitespace-nowrap"
+            >
+              {toast.action.label}
+            </button>
+          )}
+          <button
+            onClick={() => onRemove(toast.id)}
+            className="text-white hover:text-gray-200"
+          >
+            ×
+          </button>
+        </div>
       </div>
     </div>
   )

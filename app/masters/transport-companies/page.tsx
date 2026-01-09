@@ -19,7 +19,7 @@ import { useToast } from '@/lib/toast'
 
 export default function TransportCompaniesPage() {
   const router = useRouter()
-  const { transportCompanies, loading, deleteTransportCompany } = useData()
+  const { transportCompanies, loading, deleteTransportCompany, restoreTransportCompany } = useData()
   const { addToast } = useToast()
   const [searchTerm, setSearchTerm] = useState('')
   const [filteredCompanies, setFilteredCompanies] = useState(transportCompanies)
@@ -40,7 +40,7 @@ export default function TransportCompaniesPage() {
   }, [transportCompanies, searchTerm])
 
   const handleDeleteCompany = async (companyId: string, companyName: string) => {
-    // Confirm removed for debugging
+    // Confirm removed for experience/debug
     addToast('Deleting transport company...', 'info')
 
     try {
@@ -55,8 +55,14 @@ export default function TransportCompaniesPage() {
           addToast(`Failed to delete company: ${error.message}`, 'error')
         }
       } else {
-        addToast('Transport company deleted successfully', 'success')
-        window.location.reload()
+        addToast('Transport company deleted successfully', 'success', 5000, {
+          label: 'Undo',
+          onClick: async () => {
+            addToast('Restoring transport company...', 'info')
+            await restoreTransportCompany(companyId)
+            addToast('Transport company restored', 'success')
+          }
+        })
       }
     } catch (error: any) {
       console.error('Error deleting transport company:', error)

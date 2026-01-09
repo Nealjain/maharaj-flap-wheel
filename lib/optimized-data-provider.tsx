@@ -39,6 +39,9 @@ interface DataContextType {
   createTransportCompany: (data: any) => Promise<{ error: any }>
   updateTransportCompany: (id: string, updates: any) => Promise<{ error: any }>
   deleteTransportCompany: (id: string) => Promise<{ error: any }>
+  restoreItem: (id: string) => Promise<{ error: any }>
+  restoreCompany: (id: string) => Promise<{ error: any }>
+  restoreTransportCompany: (id: string) => Promise<{ error: any }>
   logAuditEvent: (eventType: string, entity: string, entityId?: string, payload?: any) => Promise<void>
 }
 
@@ -709,6 +712,24 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
     }
   }
 
+  const restoreItem = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('items')
+        .update({ deleted_at: null })
+        .eq('id', id)
+
+      if (error) throw error
+
+      await logAuditEvent('RESTORE', 'items', id)
+      refreshItems().catch(err => console.error('Error refreshing items:', err))
+      return { error: null }
+    } catch (error) {
+      console.error('Error restoring item:', error)
+      return { error }
+    }
+  }
+
   const createCompany = async (companyData: any) => {
     try {
       const { data, error } = await supabase
@@ -770,6 +791,24 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
       return { error: null }
     } catch (error) {
       console.error('Error deleting company:', error)
+      return { error }
+    }
+  }
+
+  const restoreCompany = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('companies')
+        .update({ deleted_at: null })
+        .eq('id', id)
+
+      if (error) throw error
+
+      await logAuditEvent('RESTORE', 'companies', id)
+      refreshCompanies().catch(err => console.error('Error refreshing companies:', err))
+      return { error: null }
+    } catch (error) {
+      console.error('Error restoring company:', error)
       return { error }
     }
   }
@@ -846,6 +885,24 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
     }
   }
 
+  const restoreTransportCompany = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('transport_companies')
+        .update({ deleted_at: null })
+        .eq('id', id)
+
+      if (error) throw error
+
+      await logAuditEvent('RESTORE', 'transport_companies', id)
+      refreshTransportCompanies().catch(err => console.error('Error refreshing transport companies:', err))
+      return { error: null }
+    } catch (error) {
+      console.error('Error restoring transport company:', error)
+      return { error }
+    }
+  }
+
   const logAuditEvent = async (eventType: string, entity: string, entityId?: string, payload?: any) => {
     try {
       await supabase.from('audit_logs').insert([{
@@ -887,6 +944,9 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
     createTransportCompany,
     updateTransportCompany,
     deleteTransportCompany,
+    restoreItem,
+    restoreCompany,
+    restoreTransportCompany,
     logAuditEvent,
   }
 

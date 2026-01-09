@@ -19,7 +19,7 @@ import { useToast } from '@/lib/toast'
 
 export default function ItemsPage() {
   const router = useRouter()
-  const { items, loading, deleteItem } = useData()
+  const { items, loading, deleteItem, restoreItem } = useData()
   const { addToast } = useToast()
   const [searchTerm, setSearchTerm] = useState('')
   const [filteredItems, setFilteredItems] = useState(items)
@@ -40,7 +40,7 @@ export default function ItemsPage() {
   }, [items, searchTerm])
 
   const handleDeleteItem = async (itemId: string, itemName: string) => {
-    // Confirm removed for debugging
+    // Confirm removed for experience/debug
     addToast('Deleting item...', 'info')
 
     try {
@@ -55,8 +55,14 @@ export default function ItemsPage() {
           addToast(`Failed to delete item: ${error.message}`, 'error')
         }
       } else {
-        addToast('Item deleted successfully', 'success')
-        window.location.reload()
+        addToast('Item deleted successfully', 'success', 5000, {
+          label: 'Undo',
+          onClick: async () => {
+            addToast('Restoring item...', 'info')
+            await restoreItem(itemId)
+            addToast('Item restored', 'success')
+          }
+        })
       }
     } catch (error: any) {
       console.error('Error deleting item:', error)

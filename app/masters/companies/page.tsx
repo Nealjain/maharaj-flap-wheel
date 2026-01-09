@@ -19,7 +19,7 @@ import { useToast } from '@/lib/toast'
 
 export default function CompaniesPage() {
   const router = useRouter()
-  const { companies, loading, deleteCompany } = useData()
+  const { companies, loading, deleteCompany, restoreCompany } = useData()
   const { addToast } = useToast()
   const [searchTerm, setSearchTerm] = useState('')
   const [filteredCompanies, setFilteredCompanies] = useState(companies)
@@ -40,7 +40,7 @@ export default function CompaniesPage() {
   }, [companies, searchTerm])
 
   const handleDeleteCompany = async (companyId: string, companyName: string) => {
-    // Confirm removed for debugging "nothing happening" issue
+    // Confirm removed for experience/debug
     // if (!confirm(`Are you sure you want to delete "${companyName}"? This action cannot be undone.`)) {
     //   return
     // }
@@ -60,9 +60,14 @@ export default function CompaniesPage() {
           addToast(`Failed to delete company: ${error.message}`, 'error')
         }
       } else {
-        addToast('Company deleted successfully', 'success')
-        // Force reload to ensure state is clean
-        window.location.reload()
+        addToast('Company deleted successfully', 'success', 5000, {
+          label: 'Undo',
+          onClick: async () => {
+            addToast('Restoring company...', 'info')
+            await restoreCompany(companyId)
+            addToast('Company restored', 'success')
+          }
+        })
       }
     } catch (error: any) {
       console.error('Error deleting company:', error)
