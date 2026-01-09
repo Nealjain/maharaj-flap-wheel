@@ -6,8 +6,8 @@ import { motion } from 'framer-motion'
 import Layout from '@/components/Layout'
 import { useData } from '@/lib/optimized-data-provider'
 import CSVExport from '@/components/CSVExport'
-import { 
-  PlusIcon, 
+import {
+  PlusIcon,
   MagnifyingGlassIcon,
   PencilIcon,
   TrashIcon,
@@ -26,7 +26,7 @@ export default function CompaniesPage() {
 
     // Apply search filter
     if (searchTerm) {
-      filtered = filtered.filter(company => 
+      filtered = filtered.filter(company =>
         company.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         company.gst_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         company.address?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -37,30 +37,36 @@ export default function CompaniesPage() {
   }, [companies, searchTerm])
 
   const handleDeleteCompany = async (companyId: string, companyName: string) => {
-    if (!confirm(`Are you sure you want to delete "${companyName}"? This action cannot be undone.`)) {
+    console.log('Delete button clicked for:', companyId, companyName)
+
+    if (!window.confirm(`Are you sure you want to delete "${companyName}"? This action cannot be undone.`)) {
+      console.log('Delete cancelled by user')
       return
     }
 
+    console.log('User confirmed delete, calling API...')
     try {
       const { error } = await deleteCompany(companyId)
-      
+      console.log('Delete API Result:', { error })
+
       if (error) {
         console.error('Error deleting company:', error)
         // Check if it's a foreign key constraint error
         if (error.message?.includes('foreign key') || error.code === '23503') {
-          alert('Cannot delete this company because it is referenced in one or more orders. Please remove it from all orders first.')
+          window.alert('Cannot delete this company because it is referenced in one or more orders. Please remove it from all orders first.')
         } else {
-          alert(`Failed to delete company: ${error.message || 'Please try again.'}`)
+          window.alert(`Failed to delete company: ${error.message || 'Please try again.'}`)
         }
       } else {
-        alert('Company deleted successfully!')
+        console.log('Delete success!')
+        window.alert('Company deleted successfully!')
       }
     } catch (error: any) {
-      console.error('Error deleting company:', error)
+      console.error('Exception in handleDeleteCompany:', error)
       if (error.message?.includes('foreign key') || error.code === '23503') {
-        alert('Cannot delete this company because it is referenced in one or more orders. Please remove it from all orders first.')
+        window.alert('Cannot delete this company because it is referenced in one or more orders. Please remove it from all orders first.')
       } else {
-        alert(`Failed to delete company: ${error.message || 'Please try again.'}`)
+        window.alert(`Failed to delete company: ${error.message || 'Please try again.'}`)
       }
     }
   }
