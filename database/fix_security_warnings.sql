@@ -8,18 +8,24 @@ ALTER TABLE public.login_activities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reference_ids ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reference_id_usage ENABLE ROW LEVEL SECURITY;
 
--- 2. Create Basic Policies (Permissive for now to match other tables)
+-- 2. Create Basic Policies
 -- Stock Ledger
+DROP POLICY IF EXISTS "Enable all for authenticated" ON public.stock_ledger;
 CREATE POLICY "Enable all for authenticated" ON public.stock_ledger FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
--- Audit Logs (Should be insert/read only technically, but matching app needs)
+-- Audit Logs
+DROP POLICY IF EXISTS "Enable all for authenticated" ON public.audit_logs;
 CREATE POLICY "Enable all for authenticated" ON public.audit_logs FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- Login Activities
+DROP POLICY IF EXISTS "Enable all for authenticated" ON public.login_activities;
 CREATE POLICY "Enable all for authenticated" ON public.login_activities FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- Reference IDs
+DROP POLICY IF EXISTS "Enable all for authenticated" ON public.reference_ids;
 CREATE POLICY "Enable all for authenticated" ON public.reference_ids FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Enable all for authenticated" ON public.reference_id_usage;
 CREATE POLICY "Enable all for authenticated" ON public.reference_id_usage FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- 3. Fix Security Definer View Warning
