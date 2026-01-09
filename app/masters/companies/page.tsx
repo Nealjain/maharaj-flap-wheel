@@ -37,36 +37,30 @@ export default function CompaniesPage() {
   }, [companies, searchTerm])
 
   const handleDeleteCompany = async (companyId: string, companyName: string) => {
-    console.log('Delete button clicked for:', companyId, companyName)
-
-    if (!window.confirm(`Are you sure you want to delete "${companyName}"? This action cannot be undone.`)) {
-      console.log('Delete cancelled by user')
+    if (!confirm(`Are you sure you want to delete "${companyName}"? This action cannot be undone.`)) {
       return
     }
 
-    console.log('User confirmed delete, calling API...')
     try {
       const { error } = await deleteCompany(companyId)
-      console.log('Delete API Result:', { error })
 
       if (error) {
         console.error('Error deleting company:', error)
         // Check if it's a foreign key constraint error
         if (error.message?.includes('foreign key') || error.code === '23503') {
-          window.alert('Cannot delete this company because it is referenced in one or more orders. Please remove it from all orders first.')
+          alert('Cannot delete this company because it is referenced in one or more orders. Please remove it from all orders first.')
         } else {
-          window.alert(`Failed to delete company: ${error.message || 'Please try again.'}`)
+          alert(`Failed to delete company: ${error.message || 'Please try again.'}`)
         }
       } else {
-        console.log('Delete success!')
-        window.alert('Company deleted successfully!')
+        alert('Company deleted successfully!')
       }
     } catch (error: any) {
-      console.error('Exception in handleDeleteCompany:', error)
+      console.error('Error deleting company:', error)
       if (error.message?.includes('foreign key') || error.code === '23503') {
-        window.alert('Cannot delete this company because it is referenced in one or more orders. Please remove it from all orders first.')
+        alert('Cannot delete this company because it is referenced in one or more orders. Please remove it from all orders first.')
       } else {
-        window.alert(`Failed to delete company: ${error.message || 'Please try again.'}`)
+        alert(`Failed to delete company: ${error.message || 'Please try again.'}`)
       }
     }
   }
