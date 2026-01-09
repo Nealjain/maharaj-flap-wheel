@@ -114,12 +114,25 @@ export default function CreateOrderPage() {
     }
   }
 
-  const handleUpdateItemQuantity = (itemId: string, quantity: number) => {
-    setOrderItems(prev =>
-      prev.map(item =>
-        item.item_id === itemId ? { ...item, quantity: Math.max(0, quantity) } : item
+  const handleUpdateItemQuantity = (itemId: string, value: string) => {
+    // Allow empty string to clear the input
+    if (value === '') {
+      setOrderItems(prev =>
+        prev.map(item =>
+          item.item_id === itemId ? { ...item, quantity: 0 } : item
+        )
       )
-    )
+      return
+    }
+
+    const parsed = parseInt(value)
+    if (!isNaN(parsed) && parsed >= 0) {
+      setOrderItems(prev =>
+        prev.map(item =>
+          item.item_id === itemId ? { ...item, quantity: parsed } : item
+        )
+      )
+    }
   }
 
   const handleUpdateItemDueDate = (itemId: string, dueDate: string) => {
@@ -508,7 +521,7 @@ export default function CreateOrderPage() {
                           type="number"
                           min="1"
                           value={orderItem.quantity === 0 ? '' : orderItem.quantity}
-                          onChange={(e) => handleUpdateItemQuantity(orderItem.item_id, parseInt(e.target.value) || 0)}
+                          onChange={(e) => handleUpdateItemQuantity(orderItem.item_id, e.target.value)}
                           className={`w-full px-3 py-2 border rounded text-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:text-white ${isOverStock ? 'border-red-500 dark:border-red-500' : 'border-gray-300 dark:border-gray-600'
                             }`}
                           placeholder="Enter quantity"
