@@ -7,7 +7,7 @@ import Layout from '@/components/Layout'
 import { useData } from '@/lib/optimized-data-provider'
 import { useAuth } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
-import { 
+import {
   ArrowLeftIcon,
   ClockIcon,
   XCircleIcon,
@@ -38,7 +38,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
   const [order, setOrder] = useState<any>(null)
   const [orderId, setOrderId] = useState<string>('')
   const [showPartialModal, setShowPartialModal] = useState(false)
-  const [partialDeliveries, setPartialDeliveries] = useState<{[key: string]: number}>({})
+  const [partialDeliveries, setPartialDeliveries] = useState<{ [key: string]: number }>({})
 
   useEffect(() => {
     params.then(({ id }) => setOrderId(id))
@@ -48,10 +48,10 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
     if (orderId) {
       const foundOrder = orders.find(o => o.id === orderId)
       setOrder(foundOrder)
-      
+
       // Initialize partial deliveries from order items
       if (foundOrder?.order_items) {
-        const deliveries: {[key: string]: number} = {}
+        const deliveries: { [key: string]: number } = {}
         foundOrder.order_items.forEach((item: any) => {
           deliveries[item.item_id] = item.delivered_quantity || 0
         })
@@ -62,7 +62,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
 
   const handleCompleteOrder = async () => {
     console.log('✅ COMPLETE: Starting completion process')
-    
+
     if (!isAdmin || !order) {
       console.error('❌ COMPLETE: Blocked - isAdmin:', isAdmin, 'hasOrder:', !!order)
       return
@@ -71,7 +71,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
     setLoading(true)
     try {
       console.log('✅ COMPLETE: Updating order status to completed:', order.id)
-      
+
       // Update order status to completed
       const { error: orderError } = await supabase
         .from('orders')
@@ -113,7 +113,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
     if (!isAdmin || !order) return
 
     setLoading(true)
-    
+
     // Add timeout to prevent infinite loading
     const timeout = setTimeout(() => {
       setLoading(false)
@@ -122,13 +122,13 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
 
     try {
       console.log('Updating delivery quantities:', partialDeliveries)
-      
+
       // Check auth status
       const { data: { session } } = await supabase.auth.getSession()
       console.log('Auth session:', session ? 'Authenticated' : 'Not authenticated')
       console.log('User ID:', session?.user?.id)
       console.log('User role:', session?.user?.role)
-      
+
       // Try using Supabase function first (bypasses RLS)
       try {
         const { data: funcResult, error: funcError } = await supabase
@@ -139,7 +139,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
 
         if (!funcError && funcResult?.success) {
           console.log('✅ Updated via function')
-          
+
           // Update local state immediately
           setOrder((prev: any) => ({
             ...prev,
@@ -154,19 +154,19 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
           alert('✅ Delivery recorded!')
           return
         }
-        
+
         console.log('Function not available, trying direct update...')
       } catch (funcErr) {
         console.log('Function failed, trying direct update...', funcErr)
       }
-      
+
       // Fallback: Direct update (requires RLS fix)
       const updates = Object.entries(partialDeliveries).map(([itemId, deliveredQty]) => {
         const qty = Number(deliveredQty)
         console.log(`Updating item ${itemId} to ${qty} (type: ${typeof qty})`)
         console.log(`Order ID: ${order.id}`)
         console.log(`Delivered quantity value:`, qty, `>= 0?`, qty >= 0)
-        
+
         return supabase
           .from('order_items')
           .update({ delivered_quantity: qty })
@@ -177,7 +177,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
       console.log(`Executing ${updates.length} parallel updates...`)
       const results = await Promise.all(updates)
       console.log('Update results:', results)
-      
+
       // Check for errors
       const errors = results.filter(r => r.error)
       if (errors.length > 0) {
@@ -189,7 +189,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
           details: errorDetails?.details,
           hint: errorDetails?.hint
         })
-        
+
         // Show helpful error message
         alert(`❌ RLS Policy Error!
 
@@ -213,14 +213,14 @@ Error: ${errorDetails?.message}`)
       }))
 
       // Check if all items are fully delivered
-      const allItemsDelivered = updatedOrderItems.every((item: any) => 
+      const allItemsDelivered = updatedOrderItems.every((item: any) =>
         (item.delivered_quantity || 0) >= item.quantity
       )
 
       // If all items are delivered, auto-complete the order
       if (allItemsDelivered) {
         console.log('✅ All items fully delivered, auto-completing order...')
-        
+
         try {
           // Update order status to completed directly
           const { error: completeError } = await supabase
@@ -233,7 +233,7 @@ Error: ${errorDetails?.message}`)
           }
 
           console.log('✅ Order auto-completed successfully')
-          
+
           // Log audit event
           await supabase
             .from('audit_logs')
@@ -247,7 +247,7 @@ Error: ${errorDetails?.message}`)
 
           // Refresh data
           await refetch.orders()
-          
+
           clearTimeout(timeout)
           setShowPartialModal(false)
           window.location.reload()
@@ -291,7 +291,7 @@ Error: ${errorDetails?.message}`)
 
   const handleDeleteOrder = async () => {
     console.log('🗑️ DELETE: Starting deletion process')
-    
+
     if (!isAdmin || !order) {
       console.error('❌ DELETE: Blocked - isAdmin:', isAdmin, 'hasOrder:', !!order)
       return
@@ -300,7 +300,7 @@ Error: ${errorDetails?.message}`)
     setDeleting(true)
     try {
       console.log('🗑️ DELETE: Deleting order:', order.id)
-      
+
       // Get order items first to release stock
       const { data: orderItems } = await supabase
         .from('order_items')
@@ -321,7 +321,7 @@ Error: ${errorDetails?.message}`)
           if (currentItem) {
             const newReservedStock = Math.max(0, currentItem.reserved_stock - item.quantity)
             console.log(`📦 Releasing stock for item ${item.item_id}: ${currentItem.reserved_stock} -> ${newReservedStock}`)
-            
+
             await supabase
               .from('items')
               .update({ reserved_stock: newReservedStock })
@@ -330,10 +330,10 @@ Error: ${errorDetails?.message}`)
         }
       }
 
-      // Delete order (cascade will delete order_items)
+      // Soft delete order
       const { error } = await supabase
         .from('orders')
-        .delete()
+        .update({ deleted_at: new Date().toISOString() })
         .eq('id', order.id)
 
       if (error) {
@@ -368,7 +368,7 @@ Error: ${errorDetails?.message}`)
 
   const handleReopenOrder = async () => {
     console.log('🔄 REOPEN: Starting reopen process')
-    
+
     if (!isAdmin || !order) {
       console.error('❌ REOPEN: Blocked - isAdmin:', isAdmin, 'hasOrder:', !!order)
       return
@@ -377,7 +377,7 @@ Error: ${errorDetails?.message}`)
     setLoading(true)
     try {
       console.log('🔄 REOPEN: Updating order status to pending:', order.id)
-      
+
       const { error } = await supabase
         .from('orders')
         .update({ status: 'pending' })
@@ -414,17 +414,17 @@ Error: ${errorDetails?.message}`)
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      pending: { 
+      pending: {
         color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300',
         icon: ClockIcon,
         label: 'Pending'
       },
-      completed: { 
+      completed: {
         color: 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300',
         icon: ClockIcon,
         label: 'Completed'
       },
-      cancelled: { 
+      cancelled: {
         color: 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300',
         icon: XCircleIcon,
         label: 'Cancelled'
@@ -453,12 +453,12 @@ Error: ${errorDetails?.message}`)
     )
   }
 
-  const totalQuantity = order.order_items?.reduce((sum: number, item: any) => 
+  const totalQuantity = order.order_items?.reduce((sum: number, item: any) =>
     sum + item.quantity, 0
   ) || 0
 
   // Check if all items are fully delivered
-  const allItemsDelivered = order.order_items?.every((item: any) => 
+  const allItemsDelivered = order.order_items?.every((item: any) =>
     (item.delivered_quantity || 0) >= item.quantity
   ) || false
 
@@ -579,7 +579,7 @@ Error: ${errorDetails?.message}`)
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                 Order Information
               </h2>
-              
+
               <div className="space-y-4">
                 <div className="flex items-start space-x-3">
                   <BuildingOfficeIcon className="h-5 w-5 text-gray-400 mt-0.5" />
@@ -640,7 +640,7 @@ Error: ${errorDetails?.message}`)
               <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">
                 Order Items ({order.order_items?.length || 0})
               </h2>
-              
+
               {order.order_items && order.order_items.length > 0 ? (
                 <div className="overflow-x-auto -mx-4 sm:mx-0">
                   <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -662,7 +662,7 @@ Error: ${errorDetails?.message}`)
                         const dueDate = item.due_date ? new Date(item.due_date) : null
                         const isOverdue = dueDate && dueDate < new Date() && pending > 0
                         const isDueSoon = dueDate && !isOverdue && dueDate <= new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) && pending > 0
-                        
+
                         return (
                           <motion.tr
                             key={item.item_id}
@@ -737,7 +737,7 @@ Error: ${errorDetails?.message}`)
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                 Order Summary
               </h2>
-              
+
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500 dark:text-gray-400">Items:</span>
@@ -745,14 +745,14 @@ Error: ${errorDetails?.message}`)
                     {order.order_items?.length || 0}
                   </span>
                 </div>
-                
+
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500 dark:text-gray-400">Total Quantity:</span>
                   <span className="text-gray-900 dark:text-white">
                     {order.order_items?.reduce((sum: number, item: any) => sum + item.quantity, 0) || 0}
                   </span>
                 </div>
-                
+
                 <div className="border-t border-gray-200 dark:border-gray-600 pt-3">
                   <div className="flex justify-between text-lg font-semibold">
                     <span className="text-gray-900 dark:text-white">Total Quantity:</span>
@@ -769,20 +769,20 @@ Error: ${errorDetails?.message}`)
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                 Order Status
               </h2>
-              
+
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-500 dark:text-gray-400">Status:</span>
                   {getStatusBadge(order.status)}
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-500 dark:text-gray-400">Created:</span>
                   <span className="text-sm text-gray-900 dark:text-white">
                     {formatDateTime(order.created_at)}
                   </span>
                 </div>
-                
+
                 {order.updated_at !== order.created_at && (
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-500 dark:text-gray-400">Updated:</span>
@@ -801,12 +801,12 @@ Error: ${errorDetails?.message}`)
           <div className="fixed inset-0 z-50 overflow-y-auto">
             <div className="flex items-center justify-center min-h-screen px-4">
               <div className="fixed inset-0 bg-black opacity-50" onClick={() => setShowPartialModal(false)}></div>
-              
+
               <div className="relative bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full p-6 z-10">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                   Record Partial Delivery
                 </h3>
-                
+
                 <div className="space-y-4 max-h-96 overflow-y-auto">
                   {order.order_items?.map((item: any) => (
                     <div key={item.item_id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
@@ -818,7 +818,7 @@ Error: ${errorDetails?.message}`)
                           Ordered: {item.quantity} | Delivered: {partialDeliveries[item.item_id] || 0}
                         </p>
                       </div>
-                      
+
                       <div className="flex items-center space-x-2">
                         <label className="text-sm text-gray-700 dark:text-gray-300">Deliver:</label>
                         <input
@@ -836,7 +836,7 @@ Error: ${errorDetails?.message}`)
                     </div>
                   ))}
                 </div>
-                
+
                 {/* Show Complete Order button if all items are fully delivered */}
                 {allItemsDelivered && (
                   <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
@@ -845,7 +845,7 @@ Error: ${errorDetails?.message}`)
                     </p>
                   </div>
                 )}
-                
+
                 <div className="mt-6 flex justify-end space-x-3">
                   <button
                     onClick={() => setShowPartialModal(false)}

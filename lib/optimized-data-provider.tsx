@@ -178,6 +178,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
                   item:items!order_items_item_id_fkey(id, name, sku, unit)
                 )
               `)
+              .is('deleted_at', null)
               .order('created_at', { ascending: false })
               .limit(ordersCache.pagination.limit)
             return result
@@ -194,6 +195,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
           fetch: async () => {
             const result = await supabase.from('items')
               .select('*')
+              .is('deleted_at', null)
               .order('name')
               .limit(itemsCache.pagination.limit)
             return result
@@ -210,6 +212,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
           fetch: async () => {
             const result = await supabase.from('companies')
               .select('*')
+              .is('deleted_at', null)
               .order('name')
               .limit(companiesCache.pagination.limit)
             return result
@@ -306,6 +309,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
         promises.push(
           supabase.from('transport_companies')
             .select('*')
+            .is('deleted_at', null)
             .order('name')
             .limit(transportCache.pagination.limit)
         )
@@ -387,6 +391,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
                     item:items!order_items_item_id_fkey(id, name, sku, unit)
                   )
         `)
+        .is('deleted_at', null)
         .order('created_at', { ascending: false })
         .limit(100)
 
@@ -413,6 +418,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
       const { data, error } = await supabase
         .from('items')
         .select('*')
+        .is('deleted_at', null)
         .order('name')
 
       if (error) throw error
@@ -430,6 +436,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
       const { data, error } = await supabase
         .from('companies')
         .select('*')
+        .is('deleted_at', null)
         .order('name')
 
       if (error) throw error
@@ -448,6 +455,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
       const { data, error } = await supabase
         .from('transport_companies')
         .select('*')
+        .is('deleted_at', null)
         .order('name')
 
       console.log('Transport companies fetch result:', { data, error })
@@ -684,7 +692,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
     try {
       const { error } = await supabase
         .from('items')
-        .delete()
+        .update({ deleted_at: new Date().toISOString() })
         .eq('id', id)
 
       if (error) throw error
@@ -749,7 +757,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
     try {
       const { error } = await supabase
         .from('companies')
-        .delete()
+        .update({ deleted_at: new Date().toISOString() })
         .eq('id', id)
 
       if (error) throw error
@@ -821,7 +829,7 @@ export function OptimizedDataProvider({ children }: { children: React.ReactNode 
     try {
       const { error } = await supabase
         .from('transport_companies')
-        .delete()
+        .update({ deleted_at: new Date().toISOString() })
         .eq('id', id)
 
       if (error) throw error
