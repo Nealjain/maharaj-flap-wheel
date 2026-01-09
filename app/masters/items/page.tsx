@@ -39,7 +39,8 @@ export default function ItemsPage() {
     setFilteredItems(filtered)
   }, [items, searchTerm])
 
-  const handleDeleteItem = async (itemId: string, itemName: string) => {
+  const handleDeleteItem = async (e: React.MouseEvent, itemId: string, itemName: string) => {
+    e.preventDefault()
     // Confirm removed for experience/debug
     addToast('Deleting item...', 'info')
 
@@ -55,7 +56,7 @@ export default function ItemsPage() {
           addToast(`Failed to delete item: ${error.message}`, 'error')
         }
       } else {
-        addToast('Item deleted successfully', 'success', 5000, {
+        addToast('Item deleted successfully', 'success', 10000, {
           label: 'Undo',
           onClick: async () => {
             addToast('Restoring item...', 'info')
@@ -250,7 +251,7 @@ export default function ItemsPage() {
                             <PencilIcon className="h-4 w-4" />
                           </button>
                           <button
-                            onClick={() => handleDeleteItem(item.id, item.name)}
+                            onClick={(e) => handleDeleteItem(e, item.id, item.name)}
                             className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
                             title="Delete item"
                           >

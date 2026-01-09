@@ -39,7 +39,8 @@ export default function TransportCompaniesPage() {
     setFilteredCompanies(filtered)
   }, [transportCompanies, searchTerm])
 
-  const handleDeleteCompany = async (companyId: string, companyName: string) => {
+  const handleDeleteCompany = async (e: React.MouseEvent, companyId: string, companyName: string) => {
+    e.preventDefault()
     // Confirm removed for experience/debug
     addToast('Deleting transport company...', 'info')
 
@@ -210,7 +211,7 @@ export default function TransportCompaniesPage() {
                         Edit
                       </button>
                       <button
-                        onClick={() => handleDeleteCompany(company.id, company.name)}
+                        onClick={(e) => handleDeleteCompany(e, company.id, company.name)}
                         className="inline-flex items-center px-3 py-1.5 border border-transparent shadow-sm text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700"
                         title="Delete transport company"
                       >

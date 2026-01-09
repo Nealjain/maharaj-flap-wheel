@@ -39,7 +39,8 @@ export default function CompaniesPage() {
     setFilteredCompanies(filtered)
   }, [companies, searchTerm])
 
-  const handleDeleteCompany = async (companyId: string, companyName: string) => {
+  const handleDeleteCompany = async (e: React.MouseEvent, companyId: string, companyName: string) => {
+    e.preventDefault()
     // Confirm removed for experience/debug
     // if (!confirm(`Are you sure you want to delete "${companyName}"? This action cannot be undone.`)) {
     //   return
@@ -60,7 +61,7 @@ export default function CompaniesPage() {
           addToast(`Failed to delete company: ${error.message}`, 'error')
         }
       } else {
-        addToast('Company deleted successfully', 'success', 5000, {
+        addToast('Company deleted successfully', 'success', 10000, {
           label: 'Undo',
           onClick: async () => {
             addToast('Restoring company...', 'info')
@@ -215,7 +216,7 @@ export default function CompaniesPage() {
                         Edit
                       </button>
                       <button
-                        onClick={() => handleDeleteCompany(company.id, company.name)}
+                        onClick={(e) => handleDeleteCompany(e, company.id, company.name)}
                         className="inline-flex items-center px-3 py-1.5 border border-transparent shadow-sm text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700"
                         title="Delete company"
                       >
